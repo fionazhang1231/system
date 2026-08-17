@@ -21,7 +21,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, upgrade_condition, benefits, sort_order } = body;
+    const { name, level_key, growth_threshold, benefits, sort_order } = body;
     if (!name) {
       return NextResponse.json({ success: false, error: '等级名称不能为空' }, { status: 400 });
     }
@@ -29,7 +29,8 @@ export async function POST(request: Request) {
       data: {
         org_id: ORG_ID,
         name,
-        upgrade_condition: upgrade_condition || null,
+        level_key: level_key || name,
+        growth_threshold: growth_threshold || 0,
         benefits: benefits || null,
         sort_order: sort_order || 0,
       },

@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const types = await prisma.memberType.findMany({
       where: { org_id: ORG_ID },
-      orderBy: { created_at: 'asc' },
+      orderBy: { sort_order: 'asc' },
     });
     return NextResponse.json({ success: true, data: types });
   } catch (error) {
@@ -21,12 +21,22 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, description } = body;
+    const { name, type_key, description, fee_mode, fee_amount, need_audit, audit_mode, sort_order } = body;
     if (!name) {
       return NextResponse.json({ success: false, error: '类型名称不能为空' }, { status: 400 });
     }
     const type = await prisma.memberType.create({
-      data: { org_id: ORG_ID, name, description: description || null },
+      data: {
+        org_id: ORG_ID,
+        name,
+        type_key: type_key || 'custom',
+        description: description || null,
+        fee_mode: fee_mode || 'free',
+        fee_amount: fee_amount || 0,
+        need_audit: need_audit || false,
+        audit_mode: audit_mode || 'none',
+        sort_order: sort_order || 0,
+      },
     });
     return NextResponse.json({ success: true, data: type });
   } catch (error) {

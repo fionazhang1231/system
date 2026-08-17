@@ -52,9 +52,10 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const {
-      title, type, cover_image, start_time, end_time,
+      title, type, category, cover_image, start_time, end_time,
       location, description, status, max_participants,
       registration_start, registration_end, need_audit,
+      visibility, fee,
     } = body;
 
     await prisma.activity.update({
@@ -62,16 +63,19 @@ export async function PUT(
       data: {
         title,
         type,
+        category: category || 'other',
         cover_image: cover_image || null,
         start_time,
         end_time,
         location,
         description: description || null,
         status,
+        visibility: visibility || 'member',
         max_participants: max_participants || null,
         registration_start: registration_start || null,
         registration_end: registration_end || null,
         need_audit,
+        fee: fee || 0,
       },
     });
 

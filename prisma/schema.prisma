@@ -1,5 +1,6 @@
 // Prisma Schema - 连心社群管理平台
 // 多租户设计：所有业务表包含 org_id
+// 对齐《用户表与会员表字段设计_v1.md》字段定义
 
 generator client {
   provider = "prisma-client-js"
@@ -25,73 +26,89 @@ model Organization {
   registrations  ActivityRegistration[]
 }
 
-// 用户基础表
+// 用户基础表 (user_base)
+// 对齐字段设计文档 2.1 节
 model User {
-  id         Int      @id @default(autoincrement())
-  org_id     Int
-  name       String
-  phone      String
-  email      String?
-  gender     String?  // 男/女
-  birthday   String?  // YYYY-MM-DD
-  address    String?
-  avatar     String?
-  is_deleted Boolean  @default(false)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id                 Int      @id @default(autoincrement())
+  org_id             Int
+  phone              String   // 手机号（业务唯一键）
+  phone_region       String   @default("+852") // 区号：+852/+86等
+  email              String?  // 邮箱
+  name               String   // 姓名/昵称
+  avatar_url         String?  // 头像URL
+  gender             Int?     // 性别：0=未知 1=男 2=女
+  birthday           String?  // 生日 YYYY-MM-DD
+  address            String?  // 地址
+  identity_status    String   @default("guest") // guest/logged_in/member
+  registered_channel String   @default("web") // app/h5/mini_app/web
+  last_login_at      DateTime? // 最后登录时间
+  last_login_channel String?  // 最后登录渠道
+  status             String   @default("active") // active/deleted/merged
+  deleted_at         DateTime? // 注销时间
+  is_deleted         Boolean  @default(false)
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
 
   org           Organization          @relation(fields: [org_id], references: [id])
   memberExt     MemberExt?
   registrations ActivityRegistration[]
 
-  @@index([org_id])
+  @@index([org_id, identity_status])
+  @@index([org_id, status])
   @@index([phone])
 }
 
-// 会员扩展表
+// 会员扩展表 (user_member_ext)
+// 对齐字段设计文档 2.2 节
 model MemberExt {
-  id             Int      @id @default(autoincrement())
-  user_id        Int      @unique
-  org_id         Int
-  member_type_id Int
-  member_level_id Int
-  join_date      String   // YYYY-MM-DD
-  expire_date    String   // YYYY-MM-DD
-  status         String   @default("正常") // 正常/冻结
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id                  Int      @id @default(autoincrement())
+  user_id             Int      @unique
+  org_id              Int
+  member_no           String   // 会员编号（机构内唯一）
+  member_type         String   @default("individual") // individual/group/student/honorary
+  member_level        String   @default("VIP1") // VIP1~VIP5
+  join_date           String   // 入会日期 YYYY-MM-DD
+  expire_date         String?  // 到期日期（永久会员为空）
+  membership_status   String   @default("active") // active/expired/revoked
+  rfm_layer           String?  // 当前RFM分层：high_value/potential/stable/sleeping/lost
+  rfm_score           Float?   // 当前RFM得分（0.0~5.0）
+  rfm_manual_override Int      @default(0) // 是否手动覆盖分层（0=自动 1=手动）
+  rfm_override_expire String?  // 手动覆盖有效期
+  approved_by         Int?     // 审批人user_id
+  approved_at         DateTime? // 审批通过时间
+  growth_value        Int      @default(0) // 成长值（用于等级晋级判定）
+  remark              String?  // 备注
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
 
   user        User        @relation(fields: [user_id], references: [id])
   org         Organization @relation(fields: [org_id], references: [id])
-  memberType  MemberType  @relation(fields: [member_type_id], references: [id])
-  memberLevel MemberLevel @relation(fields: [member_level_id], references: [id])
+  memberType  MemberType? @relation(fields: [member_type_id], references: [id])
+  memberLevel MemberLevel? @relation(fields: [member_level_id], references: [id])
+  member_type_id Int?
+  member_level_id Int?
 
   @@index([org_id])
+  @@index([member_type, membership_status])
+  @@index([member_level])
+  @@index([rfm_layer])
 }
 
-// 会员类型表
+// 会员类型表 (MemberType)
+// 对齐需求文档 4.2 节
 model MemberType {
-  id          Int      @id @default(autoincrement())
-  org_id      Int
-  name        String
-  description String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-
-  org        Organization @relation(fields: [org_id], references: [id])
-  memberExts MemberExt[]
-
-  @@index([org_id])
-}
-
-// 会员等级表
-model MemberLevel {
   id               Int      @id @default(autoincrement())
   org_id           Int
-  name             String
-  upgrade_condition String?
-  benefits         String?
+  name             String   // 类型名称（如"普通会员"）
+  type_key         String   @default("individual") // 类型标识：individual/group/student/honorary
+  description      String?  // 描述
+  fee_mode         String   @default("free") // free/yearly/monthly/once
+  fee_amount       Float    @default(0) // 金额（HKD）
+  need_audit       Boolean  @default(true) // 是否需要审核
+  audit_mode       String   @default("single") // none/single/double（免审批/单人/双人）
+  benefits         String?  // 类型权益描述
   sort_order       Int      @default(0)
+  is_active        Boolean  @default(true)
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 
@@ -101,22 +118,46 @@ model MemberLevel {
   @@index([org_id])
 }
 
-// 活动表
+// 会员等级表 (MemberLevel)
+// 对齐需求文档 4.3 节：VIP1-VIP5
+model MemberLevel {
+  id               Int      @id @default(autoincrement())
+  org_id           Int
+  name             String   // 等级名称（如VIP1/VIP2/VIP3）
+  level_key        String   @default("VIP1") // 等级标识
+  growth_threshold Int      @default(0) // 成长值门槛
+  benefits         String?  // 权益描述
+  sort_order       Int      @default(0)
+  is_active        Boolean  @default(true)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  org        Organization @relation(fields: [org_id], references: [id])
+  memberExts MemberExt[]
+
+  @@index([org_id])
+}
+
+// 活动表 (Activity)
+// 对齐需求文档 3.1 节
 model Activity {
   id                  Int      @id @default(autoincrement())
   org_id              Int
   title               String
   type                String   // 线下活动/线上活动/培训/会议/其他
+  category            String?  // 活动分类：社区服务/培训/筹款/文娱/体育/其他
   cover_image         String?
   start_time          String   // ISO datetime string
   end_time            String
   location            String
   description         String?
   status              String   @default("草稿") // 草稿/报名中/进行中/已结束
+  visibility          String   @default("public") // public/registered/member/member_level
   max_participants    Int?
-  registration_start  String?  // ISO datetime string
+  registration_start  String?
   registration_end    String?
   need_audit          Boolean  @default(false)
+  fee                 Float    @default(0) // 活动费用（HKD）
   is_deleted          Boolean  @default(false)
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
@@ -126,9 +167,10 @@ model Activity {
 
   @@index([org_id])
   @@index([status])
+  @@index([category])
 }
 
-// 活动报名表
+// 活动报名表 (ActivityRegistration)
 model ActivityRegistration {
   id              Int      @id @default(autoincrement())
   activity_id     Int
@@ -138,6 +180,7 @@ model ActivityRegistration {
   audit_status    String   @default("待审核") // 待审核/已通过/已拒绝
   check_in_time   String?  // ISO datetime string
   check_in_method String?  // 手动/扫码
+  channel         String?  // 报名渠道（UTM追踪）
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 

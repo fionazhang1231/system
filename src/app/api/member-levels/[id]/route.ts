@@ -9,12 +9,12 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, upgrade_condition, benefits, sort_order } = body;
+    const { name, growth_threshold, benefits, sort_order } = body;
     const level = await prisma.memberLevel.update({
       where: { id: parseInt(id) },
       data: {
         name,
-        upgrade_condition: upgrade_condition || null,
+        growth_threshold: growth_threshold || 0,
         benefits: benefits || null,
         sort_order: sort_order || 0,
       },

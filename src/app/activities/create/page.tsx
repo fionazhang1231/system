@@ -16,6 +16,15 @@ const activityTypes = [
   { value: '其他', label: '其他' },
 ];
 
+const activityCategories = [
+  { value: '文娱', label: '文娱' },
+  { value: '体育', label: '体育' },
+  { value: '培训', label: '培训' },
+  { value: '公益', label: '公益' },
+  { value: '会议', label: '会议' },
+  { value: 'other', label: '其他' },
+];
+
 /** 创建/编辑活动页面 */
 export default function ActivityFormPage() {
   const router = useRouter();
@@ -35,15 +44,18 @@ export default function ActivityFormPage() {
           form.setFieldsValue({
             title: d.title,
             type: d.type,
+            category: d.category,
             start_time: d.start_time,
             end_time: d.end_time,
             location: d.location,
             description: d.description || '',
             status: d.status,
+            visibility: d.visibility,
             max_participants: d.max_participants,
             registration_start: d.registration_start,
             registration_end: d.registration_end,
             need_audit: d.need_audit,
+            fee: d.fee,
           });
         }
         setLoading(false);
@@ -51,8 +63,11 @@ export default function ActivityFormPage() {
     } else {
       form.setFieldsValue({
         type: '线下活动',
+        category: 'other',
         status: '草稿',
+        visibility: 'member',
         need_audit: false,
+        fee: 0,
       });
     }
   }, [isEdit, params.id, form]);
@@ -123,6 +138,9 @@ export default function ActivityFormPage() {
             <Form.Item field="type" label="活动类型" rules={[{ required: true }]}>
               <Select options={activityTypes} placeholder="请选择" />
             </Form.Item>
+            <Form.Item field="category" label="活动分类">
+              <Select options={activityCategories} placeholder="请选择" allowClear />
+            </Form.Item>
             <Form.Item field="start_time" label="开始时间" rules={[{ required: true, message: '请选择开始时间' }]}>
               <Input placeholder="YYYY-MM-DD HH:mm" />
             </Form.Item>
@@ -142,6 +160,15 @@ export default function ActivityFormPage() {
                 { value: '进行中', label: '进行中' },
                 { value: '已结束', label: '已结束' },
               ]} />
+            </Form.Item>
+            <Form.Item field="visibility" label="开放度">
+              <Select options={[
+                { value: 'member', label: '会员专属' },
+                { value: 'public', label: '公开活动' },
+              ]} />
+            </Form.Item>
+            <Form.Item field="fee" label="费用（HKD）" initialValue={0}>
+              <InputNumber min={0} placeholder="0 表示免费" style={{ width: '100%' }} />
             </Form.Item>
           </div>
 
@@ -167,6 +194,9 @@ export default function ActivityFormPage() {
               <div style={{ lineHeight: 2.2 }}>
                 <p><strong>活动名称：</strong>{form.getFieldValue('title')}</p>
                 <p><strong>活动类型：</strong>{form.getFieldValue('type')}</p>
+                <p><strong>活动分类：</strong>{form.getFieldValue('category') || '-'}</p>
+                <p><strong>开放度：</strong>{form.getFieldValue('visibility') === 'public' ? '公开活动' : '会员专属'}</p>
+                <p><strong>费用：</strong>{form.getFieldValue('fee') ? `HKD ${form.getFieldValue('fee')}` : '免费'}</p>
                 <p><strong>开始时间：</strong>{form.getFieldValue('start_time')}</p>
                 <p><strong>结束时间：</strong>{form.getFieldValue('end_time')}</p>
                 <p><strong>活动地点：</strong>{form.getFieldValue('location')}</p>

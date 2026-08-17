@@ -53,9 +53,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
-      title, type, cover_image, start_time, end_time,
+      title, type, category, cover_image, start_time, end_time,
       location, description, status, max_participants,
       registration_start, registration_end, need_audit,
+      visibility, fee,
     } = body;
 
     if (!title || !start_time || !end_time || !location) {
@@ -70,16 +71,19 @@ export async function POST(request: Request) {
         org_id: ORG_ID,
         title,
         type: type || '线下活动',
+        category: category || 'other',
         cover_image: cover_image || null,
         start_time,
         end_time,
         location,
         description: description || null,
         status: status || '草稿',
+        visibility: visibility || 'member',
         max_participants: max_participants || null,
         registration_start: registration_start || null,
         registration_end: registration_end || null,
         need_audit: need_audit || false,
+        fee: fee || 0,
       },
     });
 

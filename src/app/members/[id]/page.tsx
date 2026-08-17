@@ -13,17 +13,26 @@ interface MemberDetailData {
   id: number;
   name: string;
   phone: string;
+  phone_region?: string;
   email?: string | null;
-  gender?: string | null;
+  gender?: number | null;
   birthday?: string | null;
   address?: string | null;
   avatar?: string | null;
+  identity_status?: string;
   memberExt?: {
-    memberType: { name: string };
-    memberLevel: { name: string };
-    join_date: string;
-    expire_date: string;
-    status: string;
+    member_no?: string;
+    member_type?: string;
+    member_level?: string;
+    memberType?: { name: string; type_key?: string };
+    memberLevel?: { name: string; level_key?: string; growth_threshold?: number };
+    join_date?: string;
+    expire_date?: string;
+    membership_status?: string;
+    growth_value?: number;
+    rfm_layer?: string;
+    rfm_score?: number;
+    remark?: string;
   };
   activities: Array<{
     id: number;
@@ -60,19 +69,20 @@ export default function MemberDetailPage() {
   // 冻结/解冻
   const handleToggleStatus = () => {
     if (!member?.memberExt) return;
-    const newStatus = member.memberExt.status === '正常' ? '冻结' : '正常';
+    const newStatus = member.memberExt.membership_status === 'active' ? 'revoked' : 'active';
+    const actionLabel = newStatus === 'revoked' ? '撤销' : '恢复';
     Modal.confirm({
-      title: `确认${newStatus === '冻结' ? '冻结' : '解冻'}`,
-      content: `确定要${newStatus === '冻结' ? '冻结' : '解冻'}该会员吗？`,
+      title: `确认${actionLabel}`,
+      content: `确定要${actionLabel}该会员吗？`,
       onOk: async () => {
         const res = await apiPut(`/members/${member.id}`, {
-          status: newStatus,
+          membership_status: newStatus,
         });
         if (res.success) {
-          Message.success(`${newStatus === '冻结' ? '冻结' : '解冻'}成功`);
+          Message.success(`${actionLabel}成功`);
           setMember({
             ...member,
-            memberExt: { ...member.memberExt!, status: newStatus },
+            memberExt: { ...member.memberExt!, membership_status: newStatus },
           });
         }
       },
@@ -95,6 +105,25 @@ export default function MemberDetailPage() {
       </div>
     );
   }
+
+  const genderMap: Record<number, string> = { 0: '未知', 1: '男', 2: '女' };
+  const identityMap: Record<string, string> = {
+    visitor: '游客', registered: '注册用户', member: '会员', volunteer: '志愿者', both: '会员+志愿者',
+  };
+  const rfmMap: Record<string, { label: string; color: string }> = {
+    high_value: { label: '高价值', color: 'red' },
+    potential: { label: '潜力', color: 'blue' },
+    stable: { label: '稳定', color: 'green' },
+    sleeping: { label: '沉睡', color: 'orange' },
+    new: { label: '新会员', color: 'cyan' },
+  };
+  const statusMap: Record<string, { label: string; color: string }> = {
+    active: { label: '有效', color: 'green' },
+    expired: { label: '已过期', color: 'orange' },
+    revoked: { label: '已撤销', color: 'red' },
+  };
+  const mStatus = statusMap[member.memberExt?.membership_status || 'active'];
+  const mRfm = rfmMap[member.memberExt?.rfm_layer || 'new'];
 
   const activityColumns: ColumnProps<MemberDetailData['activities'][0]>[] = [
     { title: '活动名称', dataIndex: 'title' },
@@ -137,12 +166,18 @@ export default function MemberDetailPage() {
             <Descriptions
               column={3}
               data={[
+                { label: '会员编号', value: (
+                  <span style={{ fontFamily: 'monospace', color: '#0E7C7B', fontWeight: 500 }}>
+                    {member.memberExt?.member_no || '-'}
+                  </span>
+                )},
                 { label: '姓名', value: member.name },
-                { label: '手机号', value: member.phone },
+                { label: '手机号', value: `${member.phone_region || ''} ${member.phone}` },
                 { label: '邮箱', value: member.email || '-' },
-                { label: '性别', value: member.gender || '-' },
+                { label: '性别', value: genderMap[member.gender ?? 0] || '未知' },
                 { label: '生日', value: member.birthday || '-' },
                 { label: '地址', value: member.address || '-' },
+                { label: '身份状态', value: identityMap[member.identity_status || 'visitor'] },
               ]}
             />
           </div>
@@ -155,14 +190,28 @@ export default function MemberDetailPage() {
           column={3}
           data={[
             { label: '会员类型', value: <Tag color="blue">{member.memberExt?.memberType?.name || '-'}</Tag> },
-            { label: '会员等级', value: member.memberExt?.memberLevel?.name || '-' },
-            { label: '状态', value: (
-              <span className={`status-tag ${member.memberExt?.status === '正常' ? 'normal' : 'frozen'}`}>
-                {member.memberExt?.status || '-'}
+            { label: '会员等级', value: (
+              <Tag color="gold">{member.memberExt?.memberLevel?.name || '-'}</Tag>
+            )},
+            { label: '会员状态', value: (
+              <Tag color={mStatus.color}>{mStatus.label}</Tag>
+            )},
+            { label: '成长值', value: (
+              <span style={{ fontWeight: 600, color: '#0E7C7B' }}>
+                {member.memberExt?.growth_value ?? 0}
+              </span>
+            )},
+            { label: 'RFM分层', value: (
+              <Tag color={mRfm.color}>{mRfm.label}</Tag>
+            )},
+            { label: 'RFM评分', value: (
+              <span style={{ fontWeight: 500 }}>
+                {member.memberExt?.rfm_score?.toFixed(1) ?? '0.0'} / 5.0
               </span>
             )},
             { label: '入会日期', value: member.memberExt?.join_date || '-' },
             { label: '到期日期', value: member.memberExt?.expire_date || '-' },
+            { label: '备注', value: member.memberExt?.remark || '-' },
           ]}
         />
         <div style={{ marginTop: 16 }}>
@@ -171,7 +220,7 @@ export default function MemberDetailPage() {
               编辑信息
             </Button>
             <Button onClick={handleToggleStatus}>
-              {member.memberExt?.status === '正常' ? '冻结会员' : '解冻会员'}
+              {member.memberExt?.membership_status === 'active' ? '撤销会员' : '恢复会员'}
             </Button>
           </Space>
         </div>

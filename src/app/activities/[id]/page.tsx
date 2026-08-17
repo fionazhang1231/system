@@ -16,6 +16,9 @@ interface ActivityDetailData {
   id: number;
   title: string;
   type: string;
+  category?: string;
+  visibility?: string;
+  fee?: number;
   cover_image?: string | null;
   start_time: string;
   end_time: string;
@@ -38,6 +41,7 @@ interface ActivityDetailData {
     audit_status: string;
     check_in_time?: string | null;
     check_in_method?: string | null;
+    channel?: string | null;
   }>;
 }
 
@@ -158,6 +162,10 @@ export default function ActivityDetailPage() {
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           <Tag color={statusColorMap[activity.status] || 'gray'}>{activity.status}</Tag>
           <Tag>{activity.type}</Tag>
+          {activity.category && <Tag color="cyan">{activity.category}</Tag>}
+          <Tag color={activity.visibility === 'public' ? 'blue' : 'purple'}>
+            {activity.visibility === 'public' ? '公开活动' : '会员专属'}
+          </Tag>
         </div>
         <Descriptions
           column={3}
@@ -167,6 +175,7 @@ export default function ActivityDetailPage() {
             { label: '活动地点', value: activity.location },
             { label: '人数上限', value: activity.max_participants ? `${activity.max_participants} 人` : '不限' },
             { label: '需要审核', value: activity.need_audit ? '是' : '否' },
+            { label: '费用', value: activity.fee && activity.fee > 0 ? `HKD ${activity.fee}` : '免费' },
           ]}
         />
         {activity.description && (

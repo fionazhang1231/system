@@ -31,7 +31,7 @@ export default function MembersPage() {
         page,
         pageSize,
         keyword: keyword || undefined,
-        status: selectedStatus || undefined,
+        membershipStatus: selectedStatus || undefined,
       });
       if (res.success && res.data) {
         setData(res.data as MemberListItem[]);
@@ -95,12 +95,22 @@ export default function MembersPage() {
     Message.info('导出功能开发中...');
   };
 
-  // 表格列定义
+  // 表格列定义（对齐需求文档）
   const columns: ColumnProps<MemberListItem>[] = [
+    {
+      title: '会员编号',
+      dataIndex: 'member_no',
+      width: 100,
+      render: (_, record) => (
+        <span style={{ fontFamily: 'monospace', color: '#0E7C7B', fontWeight: 500 }}>
+          {record.member_no || '-'}
+        </span>
+      ),
+    },
     {
       title: '姓名',
       dataIndex: 'name',
-      width: 180,
+      width: 160,
       render: (_, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Avatar size={32} style={{ background: '#0E7C7B', flexShrink: 0 }}>
@@ -113,18 +123,18 @@ export default function MembersPage() {
     {
       title: '手机号',
       dataIndex: 'phone',
-      width: 140,
+      width: 130,
     },
     {
       title: '会员类型',
       dataIndex: 'memberType',
-      width: 120,
+      width: 100,
       render: (_, record) => {
         const colorMap: Record<string, string> = {
           '普通会员': 'blue',
           '高级会员': 'orangered',
           'VIP会员': 'gold',
-          '荣誉会员': 'purple',
+          '学生会员': 'cyan',
           '志愿者': 'green',
         };
         return (
@@ -137,23 +147,66 @@ export default function MembersPage() {
     {
       title: '会员等级',
       dataIndex: 'memberLevel',
-      width: 100,
-      render: (_, record) => record.memberLevel?.name || '-',
+      width: 90,
+      render: (_, record) => {
+        const colorMap: Record<string, string> = {
+          'VIP1': 'gray',
+          'VIP2': 'blue',
+          'VIP3': 'green',
+          'VIP4': 'gold',
+          'VIP5': 'red',
+        };
+        return (
+          <Tag color={colorMap[record.memberLevel?.name] || 'gray'}>
+            {record.memberLevel?.name || '-'}
+          </Tag>
+        );
+      },
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      width: 80,
+      title: '成长值',
+      dataIndex: 'growth_value',
+      width: 90,
       render: (_, record) => (
-        <span className={`status-tag ${record.status === '正常' ? 'normal' : 'frozen'}`}>
-          {record.status}
+        <span style={{ fontWeight: 500, color: '#0E7C7B' }}>
+          {record.growth_value ?? 0}
         </span>
       ),
     },
     {
+      title: 'RFM分层',
+      dataIndex: 'rfm_layer',
+      width: 100,
+      render: (_, record) => {
+        const rfmMap: Record<string, { label: string; color: string }> = {
+          'high_value': { label: '高价值', color: 'red' },
+          'potential': { label: '潜力', color: 'blue' },
+          'stable': { label: '稳定', color: 'green' },
+          'sleeping': { label: '沉睡', color: 'orange' },
+          'new': { label: '新会员', color: 'cyan' },
+        };
+        const rfm = rfmMap[record.rfm_layer || 'new'];
+        return <Tag color={rfm.color}>{rfm.label}</Tag>;
+      },
+    },
+    {
+      title: '状态',
+      dataIndex: 'membership_status',
+      width: 90,
+      render: (_, record) => {
+        const statusMap: Record<string, { label: string; color: string }> = {
+          'active': { label: '有效', color: 'green' },
+          'expired': { label: '已过期', color: 'orange' },
+          'revoked': { label: '已撤销', color: 'red' },
+        };
+        const s = statusMap[record.membership_status || 'active'];
+        return <Tag color={s.color}>{s.label}</Tag>;
+      },
+    },
+    {
       title: '注册时间',
       dataIndex: 'created_at',
-      width: 160,
+      width: 110,
       render: (_, record) => {
         try {
           return new Date(record.created_at).toLocaleDateString('zh-CN');
@@ -165,7 +218,7 @@ export default function MembersPage() {
     {
       title: '操作',
       dataIndex: 'operations',
-      width: 180,
+      width: 160,
       fixed: 'right',
       render: (_, record) => (
         <Space>
@@ -216,8 +269,9 @@ export default function MembersPage() {
               style={{ width: 140 }}
               allowClear
               options={[
-                { value: '正常', label: '正常' },
-                { value: '冻结', label: '冻结' },
+                { value: 'active', label: '有效' },
+                { value: 'expired', label: '已过期' },
+                { value: 'revoked', label: '已撤销' },
               ]}
             />
             <Button type="primary" icon={<IconSearch />} onClick={() => { setPage(1); fetchData(); }}>
@@ -243,7 +297,7 @@ export default function MembersPage() {
           columns={columns}
           data={data}
           loading={loading}
-          scroll={{ x: 1000 }}
+          scroll={{ x: 1200 }}
           pagination={{
             current: page,
             pageSize,

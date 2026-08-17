@@ -9,10 +9,18 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, description } = body;
+    const { name, description, fee_mode, fee_amount, need_audit, audit_mode, sort_order } = body;
     const type = await prisma.memberType.update({
       where: { id: parseInt(id) },
-      data: { name, description: description || null },
+      data: {
+        name,
+        description: description || null,
+        fee_mode: fee_mode || 'free',
+        fee_amount: fee_amount || 0,
+        need_audit: need_audit || false,
+        audit_mode: audit_mode || 'none',
+        sort_order: sort_order || 0,
+      },
     });
     return NextResponse.json({ success: true, data: type });
   } catch (error) {

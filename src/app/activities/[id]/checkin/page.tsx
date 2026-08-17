@@ -17,6 +17,7 @@ interface RegistrationItem {
   audit_status: string;
   check_in_time?: string | null;
   check_in_method?: string | null;
+  channel?: string | null;
 }
 
 /** 签到管理页 */
@@ -104,6 +105,13 @@ export default function CheckinPage() {
       render: (_, record) => {
         const colorMap: Record<string, string> = { '待审核': 'orange', '已通过': 'green', '已拒绝': 'red' };
         return <Tag color={colorMap[record.audit_status] || 'gray'}>{record.audit_status}</Tag>;
+      },
+    },
+    {
+      title: '报名渠道', dataIndex: 'channel', width: 100,
+      render: (_, record) => {
+        const channelMap: Record<string, string> = { web: '网页', wechat: '微信', app: 'App', h5: 'H5' };
+        return record.channel ? (channelMap[record.channel] || record.channel) : '-';
       },
     },
     {

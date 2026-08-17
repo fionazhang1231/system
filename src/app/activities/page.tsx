@@ -20,6 +20,16 @@ const statusColorMap: Record<string, string> = {
   '已结束': 'gray',
 };
 
+/** 活动分类映射 */
+const categoryMap: Record<string, string> = {
+  '文娱': '文娱',
+  '体育': '体育',
+  '培训': '培训',
+  '公益': '公益',
+  '会议': '会议',
+  'other': '其他',
+};
+
 /** 活动列表页（卡片式） */
 export default function ActivitiesPage() {
   const router = useRouter();
@@ -143,6 +153,13 @@ export default function ActivitiesPage() {
                   >
                     {activity.status}
                   </Tag>
+                  {activity.category && (
+                    <Tag
+                      style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}
+                    >
+                      {categoryMap[activity.category] || activity.category}
+                    </Tag>
+                  )}
                 </div>
 
                 {/* 内容区 */}

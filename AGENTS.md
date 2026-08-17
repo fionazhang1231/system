@@ -2,7 +2,7 @@
 
 ## 项目概览
 
-香港/澳门社团管理机构数字化 SaaS 平台后台 Demo，聚焦会员管理 + 活动管理两个核心模块。
+香港/澳门社团管理机构数字化 SaaS 平台后台 Demo，聚焦会员管理 + 活动管理两个核心模块。数据模型对齐详细需求规格书（`assets/`目录下）。
 
 ## 技术栈
 
@@ -19,7 +19,7 @@
 
 ```
 ├── prisma/
-│   ├── schema.prisma         # 数据库 Schema
+│   ├── schema.prisma         # 数据库 Schema（对齐字段设计文档）
 │   ├── seed.ts               # 种子数据
 │   └── dev.db                # SQLite 数据库文件
 ├── src/
@@ -72,11 +72,45 @@ npx prisma db push     # 同步 Schema 到数据库
 npx tsx prisma/seed.ts # 运行种子数据
 ```
 
-## 数据库
+## 数据库（对齐字段设计文档）
 
 - 使用 SQLite (prisma/dev.db)
 - 多租户设计：所有业务表含 org_id 字段，Demo 固定 org_id=1
 - 软删除：业务表含 is_deleted 字段
+
+### 核心字段（user_base）
+- `phone_region` 手机号区号（+852/+853/+86）
+- `identity_status` 身份状态（visitor/registered/member/volunteer/both）
+- `registered_channel` 注册渠道（wechat/app/web/imported）
+- `status` 账号状态（active/disabled）
+
+### 核心字段（user_member_ext）
+- `member_no` 会员编号（唯一，如 M1001）
+- `member_type` / `member_level` 字符串枚举（individual/group/student/honorary, VIP1-VIP5）
+- `membership_status` 会籍状态（active/expired/revoked）
+- `rfm_layer` RFM分层（high_value/potential/stable/sleeping/new）
+- `rfm_score` RFM评分（0-5）
+- `growth_value` 成长值
+- `remark` 备注
+
+### 会员类型（MemberType）
+- `type_key` 类型标识（individual/group/student/honorary/volunteer/custom）
+- `fee_mode` 收费模式（free/yearly/monthly/lifetime）
+- `fee_amount` 费用金额
+- `need_audit` 是否需要审核
+- `audit_mode` 审核模式（none/single/double）
+
+### 会员等级（MemberLevel）
+- `level_key` 等级标识（VIP1-VIP5）
+- `growth_threshold` 成长值门槛
+
+### 活动（Activity）
+- `category` 活动分类（文娱/体育/培训/公益/会议/other）
+- `visibility` 开放度（member=会员专属/public=公开）
+- `fee` 费用（HKD）
+
+### 报名（ActivityRegistration）
+- `channel` 报名渠道（web/wechat/app/h5）
 
 ## 认证
 
@@ -113,3 +147,9 @@ npx tsx prisma/seed.ts # 运行种子数据
 - 背景：#F7F8FA
 - 卡片圆角：8px
 - 全中文界面
+
+## 需求文档参考
+
+- `assets/01b_会员管理需求规格书.md` - 会员管理详细需求
+- `assets/10_活动管理.md` - 活动管理详细需求
+- `assets/用户表与会员表字段设计_v1.md` - 数据库字段设计

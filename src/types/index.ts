@@ -1,4 +1,4 @@
-// 连心社群管理平台 - 类型定义
+// 连心社群管理平台 - 类型定义（对齐需求文档字段设计）
 
 // 机构
 export interface Organization {
@@ -6,30 +6,42 @@ export interface Organization {
   name: string;
 }
 
-// 用户/会员基础信息
+// 用户/会员基础信息（user_base）
 export interface User {
   id: number;
   org_id: number;
   name: string;
   phone: string;
+  phone_region?: string;
   email?: string | null;
-  gender?: string | null;
+  gender?: number | null;  // 0=未知 1=男 2=女
   birthday?: string | null;
   address?: string | null;
   avatar?: string | null;
+  identity_status?: 'visitor' | 'registered' | 'member' | 'volunteer' | 'both';
+  registered_channel?: string;
+  status?: 'active' | 'disabled';
+  is_deleted?: boolean;
   created_at: string;
 }
 
-// 会员扩展信息
+// 会员扩展信息（user_member_ext）
 export interface MemberExt {
   id: number;
   user_id: number;
   org_id: number;
+  member_no?: string;
+  member_type?: string;
+  member_level?: string;
   member_type_id: number;
   member_level_id: number;
   join_date: string;
   expire_date: string;
-  status: '正常' | '冻结';
+  membership_status?: 'active' | 'expired' | 'revoked';
+  rfm_layer?: 'high_value' | 'potential' | 'stable' | 'sleeping' | 'new';
+  rfm_score?: number;
+  growth_value?: number;
+  remark?: string;
 }
 
 // 会员详情（合并用户+会员扩展）
@@ -45,10 +57,25 @@ export interface MemberListItem {
   id: number;
   name: string;
   phone: string;
+  phone_region?: string;
   avatar?: string | null;
+  email?: string | null;
+  gender?: number | null;
+  birthday?: string | null;
+  address?: string | null;
+  identity_status?: string;
+  member_no?: string | null;
   memberType: MemberType;
   memberLevel: MemberLevel;
-  status: '正常' | '冻结';
+  member_type?: string | null;
+  member_level?: string | null;
+  membership_status: 'active' | 'expired' | 'revoked';
+  growth_value?: number;
+  rfm_layer?: string;
+  rfm_score?: number;
+  join_date?: string;
+  expire_date?: string;
+  remark?: string | null;
   created_at: string;
 }
 
@@ -57,7 +84,13 @@ export interface MemberType {
   id: number;
   org_id: number;
   name: string;
+  type_key?: string;
   description?: string | null;
+  fee_mode?: string;
+  fee_amount?: number;
+  need_audit?: boolean;
+  audit_mode?: string;
+  sort_order?: number;
   created_at: string;
 }
 
@@ -66,7 +99,8 @@ export interface MemberLevel {
   id: number;
   org_id: number;
   name: string;
-  upgrade_condition?: string | null;
+  level_key?: string;
+  growth_threshold?: number;
   benefits?: string | null;
   sort_order: number;
   created_at: string;
@@ -78,6 +112,9 @@ export interface Activity {
   org_id: number;
   title: string;
   type: '线下活动' | '线上活动' | '培训' | '会议' | '其他';
+  category?: string;
+  visibility?: 'member' | 'public';
+  fee?: number;
   cover_image?: string | null;
   start_time: string;
   end_time: string;
@@ -104,6 +141,7 @@ export interface ActivityRegistration {
   audit_status: '待审核' | '已通过' | '已拒绝';
   check_in_time?: string | null;
   check_in_method?: string | null;
+  channel?: string | null;
   user: User;
 }
 
@@ -135,19 +173,23 @@ export interface MemberFormData {
   name: string;
   phone: string;
   email?: string;
-  gender?: string;
+  gender?: number;
   birthday?: string;
   address?: string;
   member_type_id: number;
   member_level_id: number;
   join_date: string;
   expire_date: string;
+  remark?: string;
 }
 
 // 活动表单数据
 export interface ActivityFormData {
   title: string;
   type: string;
+  category?: string;
+  visibility?: string;
+  fee?: number;
   cover_image?: string;
   start_time: string;
   end_time: string;

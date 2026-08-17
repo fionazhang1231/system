@@ -45,7 +45,7 @@ export default function MemberFormPage() {
             name: d.name,
             phone: d.phone,
             email: d.email || '',
-            gender: d.gender || '',
+            gender: d.gender || 0,
             birthday: d.birthday || '',
             address: d.address || '',
             member_type_id: ext?.member_type_id || (memberTypes[0]?.id ?? 1),
@@ -163,8 +163,9 @@ export default function MemberFormPage() {
             </Form.Item>
             <Form.Item field="gender" label="性别">
               <Select placeholder="请选择" options={[
-                { value: '男', label: '男' },
-                { value: '女', label: '女' },
+                { value: 0, label: '未知' },
+                { value: 1, label: '男' },
+                { value: 2, label: '女' },
               ]} allowClear />
             </Form.Item>
             <Form.Item field="birthday" label="生日">
@@ -189,6 +190,9 @@ export default function MemberFormPage() {
             <Form.Item field="expire_date" label="到期日期">
               <DatePicker style={{ width: '100%' }} />
             </Form.Item>
+            <Form.Item field="remark" label="备注">
+              <Input.TextArea placeholder="请输入备注信息（选填）" maxLength={500} showWordLimit />
+            </Form.Item>
           </div>
 
           {/* Step 3: 确认信息 */}
@@ -198,7 +202,7 @@ export default function MemberFormPage() {
                 <p><strong>姓名：</strong>{form.getFieldValue('name')}</p>
                 <p><strong>手机号：</strong>{form.getFieldValue('phone')}</p>
                 <p><strong>邮箱：</strong>{form.getFieldValue('email') || '-'}</p>
-                <p><strong>性别：</strong>{form.getFieldValue('gender') || '-'}</p>
+                <p><strong>性别：</strong>{form.getFieldValue('gender') === 1 ? '男' : form.getFieldValue('gender') === 2 ? '女' : '未知'}</p>
                 <p><strong>生日：</strong>{form.getFieldValue('birthday') || '-'}</p>
                 <p><strong>地址：</strong>{form.getFieldValue('address') || '-'}</p>
                 <p><strong>会员类型：</strong>{memberTypes.find((t) => t.id === form.getFieldValue('member_type_id'))?.name || '-'}</p>

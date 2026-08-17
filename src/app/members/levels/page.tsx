@@ -2,27 +2,36 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Table, Button, Modal, Form, Input, InputNumber, Message, Space,
+  Table, Button, Modal, Form, Input, InputNumber, Message, Space, Tag,
 } from '@arco-design/web-react';
-import { IconPlus, IconEdit, IconDelete } from '@arco-design/web-react/icon';
+import { IconPlus } from '@arco-design/web-react/icon';
 import type { ColumnProps } from '@arco-design/web-react/es/Table';
 import BreadcrumbNav from '@/components/layout/Breadcrumb';
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
-import type { MemberLevel } from '@/types';
+
+interface MemberLevelItem {
+  id: number;
+  name: string;
+  level_key: string;
+  growth_threshold: number;
+  benefits?: string;
+  sort_order: number;
+  created_at: string;
+}
 
 /** 会员等级管理页 */
 export default function MemberLevelsPage() {
-  const [data, setData] = useState<MemberLevel[]>([]);
+  const [data, setData] = useState<MemberLevelItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingItem, setEditingItem] = useState<MemberLevel | null>(null);
+  const [editingItem, setEditingItem] = useState<MemberLevelItem | null>(null);
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiGet<MemberLevel[]>('/member-levels');
+      const res = await apiGet<MemberLevelItem[]>('/member-levels');
       if (res.success && res.data) setData(res.data);
     } finally {
       setLoading(false);
@@ -37,11 +46,12 @@ export default function MemberLevelsPage() {
     setModalVisible(true);
   };
 
-  const handleEdit = (record: MemberLevel) => {
+  const handleEdit = (record: MemberLevelItem) => {
     setEditingItem(record);
     form.setFieldsValue({
       name: record.name,
-      upgrade_condition: record.upgrade_condition || '',
+      level_key: record.level_key,
+      growth_threshold: record.growth_threshold,
       benefits: record.benefits || '',
       sort_order: record.sort_order,
     });
@@ -89,13 +99,20 @@ export default function MemberLevelsPage() {
     }
   };
 
-  const columns: ColumnProps<MemberLevel>[] = [
-    { title: '等级名称', dataIndex: 'name', width: 120 },
-    { title: '升级条件', dataIndex: 'upgrade_condition', render: (_, record) => record.upgrade_condition || '-' },
-    { title: '权益描述', dataIndex: 'benefits', render: (_, record) => record.benefits || '-' },
-    { title: '排序', dataIndex: 'sort_order', width: 80 },
+  const levelColorMap: Record<string, string> = {
+    'VIP1': 'gray', 'VIP2': 'blue', 'VIP3': 'green', 'VIP4': 'gold', 'VIP5': 'red',
+  };
+
+  const columns: ColumnProps<MemberLevelItem>[] = [
+    { title: '等级名称', dataIndex: 'name', width: 120, render: (_, r) => <Tag color={levelColorMap[r.name] || 'gray'}>{r.name}</Tag> },
+    { title: '等级标识', dataIndex: 'level_key', width: 100, render: (_, r) => <Tag>{r.level_key}</Tag> },
+    { title: '成长值门槛', dataIndex: 'growth_threshold', width: 120, render: (_, r) => (
+      <span style={{ fontWeight: 500, color: '#0E7C7B' }}>{r.growth_threshold.toLocaleString()}</span>
+    )},
+    { title: '等级权益', dataIndex: 'benefits', render: (_, r) => r.benefits || '-' },
+    { title: '排序', dataIndex: 'sort_order', width: 60 },
     {
-      title: '操作', dataIndex: 'operations', width: 150,
+      title: '操作', dataIndex: 'operations', width: 130, fixed: 'right' as const,
       render: (_, record) => (
         <Space>
           <button className="action-btn" onClick={() => handleEdit(record)}>编辑</button>
@@ -121,6 +138,7 @@ export default function MemberLevelsPage() {
           data={data}
           loading={loading}
           pagination={false}
+          scroll={{ x: 800 }}
         />
       </div>
 
@@ -132,19 +150,20 @@ export default function MemberLevelsPage() {
         onOk={handleSubmit}
         confirmLoading={submitting}
         autoFocus={false}
+        style={{ width: 520 }}
       >
         <Form form={form} layout="vertical">
           <Form.Item field="name" label="等级名称" rules={[{ required: true, message: '请输入等级名称' }]}>
-            <Input placeholder="请输入等级名称" maxLength={20} />
+            <Input placeholder="如：VIP1、VIP2..." maxLength={20} />
           </Form.Item>
-          <Form.Item field="upgrade_condition" label="升级条件">
-            <Input.TextArea placeholder="请输入升级条件" maxLength={200} />
+          <Form.Item field="growth_threshold" label="成长值门槛" initialValue={0}>
+            <InputNumber min={0} placeholder="达到该成长值自动升级" style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item field="benefits" label="权益描述">
-            <Input.TextArea placeholder="请输入权益描述" maxLength={500} />
+          <Form.Item field="benefits" label="等级权益">
+            <Input.TextArea placeholder="请输入权益描述" maxLength={200} autoSize={{ minRows: 2, maxRows: 4 }} />
           </Form.Item>
           <Form.Item field="sort_order" label="排序" initialValue={0}>
-            <InputNumber placeholder="排序值" min={0} style={{ width: '100%' }} />
+            <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
         </Form>
       </Modal>
