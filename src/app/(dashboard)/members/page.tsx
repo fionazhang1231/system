@@ -8,10 +8,10 @@ import {
 } from '@arco-design/web-react';
 import {
   IconSearch, IconPlus, IconDownload, IconDelete, IconEdit, IconEye,
-  IconUser, IconUpload, IconDown, IconRefresh,
+  IconUser, IconUpload, IconDown, IconRefresh, IconFile,
 } from '@arco-design/web-react/icon';
 import type { ColumnProps } from '@arco-design/web-react/es/Table';
-import { api, apiGet, apiDelete } from '@/lib/api';
+import { apiGet, apiDelete } from '@/lib/api';
 import dayjs from 'dayjs';
 
 /** 会员列表项类型 */
@@ -68,9 +68,8 @@ export default function MembersPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // 搜索条件
+  // 搜索条件：合并为一个模糊搜索框（姓名/手机号/会员编号）
   const [keyword, setKeyword] = useState('');
-  const [memberNo, setMemberNo] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [levelFilter, setLevelFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -105,7 +104,6 @@ export default function MembersPage() {
       params.set('page', String(p));
       params.set('pageSize', String(ps));
       if (keyword) params.set('keyword', keyword);
-      if (memberNo) params.set('member_no', memberNo);
       if (typeFilter) params.set('member_type', typeFilter);
       if (levelFilter) params.set('member_level', levelFilter);
       if (statusFilter) params.set('membership_status', statusFilter);
@@ -121,7 +119,7 @@ export default function MembersPage() {
     } finally {
       setLoading(false);
     }
-  }, [keyword, memberNo, typeFilter, levelFilter, statusFilter]);
+  }, [keyword, typeFilter, levelFilter, statusFilter]);
 
   useEffect(() => {
     fetchData(page, pageSize);
@@ -136,7 +134,6 @@ export default function MembersPage() {
   // 重置搜索
   const handleReset = () => {
     setKeyword('');
-    setMemberNo('');
     setTypeFilter('');
     setLevelFilter('');
     setStatusFilter('');
@@ -181,7 +178,7 @@ export default function MembersPage() {
           const results = await Promise.all(
             selectedKeys.map((id) => apiDelete(`/members/${id}`))
           );
-          const failCount = results.filter((r: { success: boolean }) => !r.success).length;
+          const failCount = results.filter((r) => !r.success).length;
           if (failCount === 0) {
             Message.success(`成功删除 ${selectedKeys.length} 条会员记录`);
           } else {
@@ -205,7 +202,6 @@ export default function MembersPage() {
       okButtonProps: { status: 'danger' },
       cancelText: '取消',
       onOk: async () => {
-        // 分批删除，每批50条
         const allIds = data.map((d) => d.id);
         const batchSize = 50;
         let deleted = 0;
@@ -216,8 +212,8 @@ export default function MembersPage() {
           const results = await Promise.all(
             batch.map((id) => apiDelete(`/members/${id}`))
           );
-          deleted += results.filter((r: { success: boolean }) => r.success).length;
-          failed += results.filter((r: { success: boolean }) => !r.success).length;
+          deleted += results.filter((r) => r.success).length;
+          failed += results.filter((r) => !r.success).length;
         }
         Message.clear();
         if (failed === 0) {
@@ -244,7 +240,6 @@ export default function MembersPage() {
   const handleExportAll = async () => {
     Message.loading({ content: '正在导出全部数据...', duration: 0, id: 'export-all' });
     try {
-      // 分批获取全量数据
       const allData: MemberItem[] = [];
       const batchSize = 200;
       let currentPage = 1;
@@ -326,10 +321,24 @@ export default function MembersPage() {
     URL.revokeObjectURL(url);
   };
 
+  // 下载导入模板
+  const handleDownloadTemplate = () => {
+    const headers = ['姓名', '手机号', '手机号区号', '邮箱', '性别', '生日', '地址', '会员类型', '会员等级', '备注'];
+    const example = ['张三', '13800138000', '+86', 'zhangsan@example.com', '男', '1990-01-01', '香港九龙', '普通会员', 'VIP1', '示例备注'];
+    const csvContent = [headers.join(','), example.join(',')].join('\n');
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '会员导入模板.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+    Message.success('模板下载成功');
+  };
+
   // 批量导入（模拟处理大数据量）
   const handleImport = async () => {
     setImportLoading(true);
-    // 模拟异步导入处理
     await new Promise((resolve) => setTimeout(resolve, 2000));
     setImportLoading(false);
     setImportVisible(false);
@@ -437,33 +446,12 @@ export default function MembersPage() {
   const rowSelection = {
     selectedRowKeys: selectedKeys,
     onChange: (keys: (string | number)[]) => {
-      // 合并当前页选择，保持跨页选中
       const currentPageIds = data.map((d) => String(d.id));
       const currentSelected = keys.map(String);
-      // 保留其他页的选中，更新当前页
       const otherPageSelected = selectedKeysRef.current.filter(
         (k) => !currentPageIds.includes(k)
       );
       setSelectedKeys([...otherPageSelected, ...currentSelected]);
-    },
-    onSelect: (selected: boolean, record: MemberItem) => {
-      const key = String(record.id);
-      if (selected) {
-        if (!selectedKeysRef.current.includes(key)) {
-          setSelectedKeys([...selectedKeysRef.current, key]);
-        }
-      } else {
-        setSelectedKeys(selectedKeysRef.current.filter((k) => k !== key));
-      }
-    },
-    onSelectAll: (selected: boolean) => {
-      const currentPageIds = data.map((d) => String(d.id));
-      if (selected) {
-        const newKeys = [...new Set([...selectedKeysRef.current, ...currentPageIds])];
-        setSelectedKeys(newKeys);
-      } else {
-        setSelectedKeys(selectedKeysRef.current.filter((k) => !currentPageIds.includes(k)));
-      }
     },
     checkAll: true,
     checkCrossPage: true,
@@ -476,19 +464,11 @@ export default function MembersPage() {
       <div className="site-card" style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
           <Input
-            placeholder="姓名 / 手机号搜索"
+            placeholder="姓名 / 手机号 / 会员编号"
             prefix={<IconSearch />}
-            style={{ width: 200 }}
+            style={{ width: 240 }}
             value={keyword}
             onChange={(v) => setKeyword(v)}
-            onPressEnter={handleSearch}
-            allowClear
-          />
-          <Input
-            placeholder="会员编号搜索"
-            style={{ width: 160 }}
-            value={memberNo}
-            onChange={(v) => setMemberNo(v)}
             onPressEnter={handleSearch}
             allowClear
           />
@@ -611,6 +591,7 @@ export default function MembersPage() {
             showTotal: true,
             sizeCanChange: true,
             pageSizeChangeResetCurrent: true,
+            sizeOptions: [10, 20, 50, 100],
             onChange: (p: number, ps: number) => {
               setPage(p);
               setPageSize(ps);
@@ -641,6 +622,15 @@ export default function MembersPage() {
         }
       >
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
+          <div style={{ marginBottom: 16 }}>
+            <Button
+              icon={<IconFile />}
+              onClick={handleDownloadTemplate}
+              type="outline"
+            >
+              下载导入模板
+            </Button>
+          </div>
           <Upload
             drag
             accept=".csv,.xlsx"

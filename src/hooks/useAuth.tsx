@@ -9,6 +9,7 @@ interface UserInfo {
 
 interface AuthContextType {
   isLoggedIn: boolean;
+  isLoading: boolean;
   phone: string;
   user: UserInfo;
   login: (phone: string) => void;
@@ -17,6 +18,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
+  isLoading: true,
   phone: '',
   user: { name: '管理员', phone: '' },
   login: () => {},
@@ -25,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [phone, setPhone] = useState('');
 
   useEffect(() => {
@@ -33,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoggedIn(true);
       setPhone(stored);
     }
+    setIsLoading(false);
   }, []);
 
   const login = useCallback((userPhone: string) => {
@@ -50,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const user: UserInfo = { name: '管理员', phone };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, phone, user, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, phone, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

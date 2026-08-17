@@ -10,7 +10,6 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
     const keyword = searchParams.get('keyword') || '';
-    const memberNo = searchParams.get('member_no') || '';
     const memberTypeId = searchParams.get('member_type');
     const memberLevelId = searchParams.get('member_level');
     const membershipStatus = searchParams.get('membership_status');
@@ -21,18 +20,17 @@ export async function GET(request: Request) {
       is_deleted: false,
     };
 
+    // 关键词模糊搜索：同时匹配姓名、手机号、会员编号
     if (keyword) {
       where.OR = [
         { name: { contains: keyword } },
         { phone: { contains: keyword } },
+        { memberExt: { member_no: { contains: keyword } } },
       ];
     }
 
     // memberExt 关联筛选条件
     const memberExtWhere: Record<string, unknown> = {};
-    if (memberNo) {
-      memberExtWhere.member_no = { contains: memberNo };
-    }
     if (memberTypeId) {
       memberExtWhere.member_type_id = parseInt(memberTypeId);
     }

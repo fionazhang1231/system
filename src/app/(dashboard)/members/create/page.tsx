@@ -7,6 +7,7 @@ import {
 } from '@arco-design/web-react';
 import BreadcrumbNav from '@/components/layout/Breadcrumb';
 import { apiGet, apiPost, apiPut } from '@/lib/api';
+import { isValidPhone, getPhoneHint } from '@/lib/phone';
 
 /** 新增/编辑会员页面 */
 export default function MemberFormPage() {
@@ -153,10 +154,18 @@ export default function MemberFormPage() {
               label="手机号"
               rules={[
                 { required: true, message: '请输入手机号' },
-                { match: /^1\d{10}$/, message: '请输入正确的11位手机号' },
+                {
+                  validator: (value, callback) => {
+                    if (value && !isValidPhone(value)) {
+                      callback(getPhoneHint());
+                    } else {
+                      callback();
+                    }
+                  },
+                },
               ]}
             >
-              <Input placeholder="请输入手机号" maxLength={11} />
+              <Input placeholder="请输入手机号（大陆11位/港澳8位）" maxLength={11} />
             </Form.Item>
             <Form.Item field="email" label="邮箱" rules={[{ type: 'email', message: '请输入正确的邮箱格式' }]}>
               <Input placeholder="请输入邮箱" />

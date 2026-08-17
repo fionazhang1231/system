@@ -18,15 +18,19 @@ export default function DashboardShell({
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isLoggedIn && pathname !== '/login') {
+    if (!isLoading && !isLoggedIn) {
       router.push('/login');
     }
-  }, [isLoggedIn, pathname, router]);
+  }, [isLoading, isLoggedIn, router]);
+
+  if (isLoading) {
+    return null;
+  }
 
   if (!isLoggedIn) {
     return null;
