@@ -1,65 +1,115 @@
-# 项目上下文
+# 连心社群管理平台 Demo
 
-### 版本技术栈
+## 项目概览
+
+香港/澳门社团管理机构数字化 SaaS 平台后台 Demo，聚焦会员管理 + 活动管理两个核心模块。
+
+## 技术栈
 
 - **Framework**: Next.js 16 (App Router)
-- **Core**: React 19
-- **Language**: TypeScript 5
-- **UI 组件**: shadcn/ui (基于 Radix UI)
+- **Core**: React 19 + TypeScript 5 (strict)
+- **UI 组件**: Arco Design React (@arco-design/web-react)
 - **Styling**: Tailwind CSS 4
+- **图表**: ECharts (echarts-for-react)
+- **数据库**: Prisma 5 + SQLite
+- **日期处理**: dayjs
+- **包管理**: pnpm
 
 ## 目录结构
 
 ```
-├── public/                 # 静态资源
-├── scripts/                # 构建与启动脚本
-│   ├── build.sh            # 构建脚本
-│   ├── dev.sh              # 开发环境启动脚本
-│   ├── prepare.sh          # 预处理脚本
-│   └── start.sh            # 生产环境启动脚本
+├── prisma/
+│   ├── schema.prisma         # 数据库 Schema
+│   ├── seed.ts               # 种子数据
+│   └── dev.db                # SQLite 数据库文件
 ├── src/
-│   ├── app/                # 页面路由与布局
-│   ├── components/ui/      # Shadcn UI 组件库
-│   ├── hooks/              # 自定义 Hooks
-│   ├── lib/                # 工具库
-│   │   └── utils.ts        # 通用工具函数 (cn)
-│   └── server.ts           # 自定义服务端入口
-├── next.config.ts          # Next.js 配置
-├── package.json            # 项目依赖管理
-└── tsconfig.json           # TypeScript 配置
+│   ├── app/
+│   │   ├── (dashboard)/      # 带侧边栏的仪表盘布局
+│   │   ├── login/            # 登录页
+│   │   ├── members/          # 会员管理页面
+│   │   │   ├── [id]/         # 会员详情 & 编辑
+│   │   │   ├── create/       # 新增会员
+│   │   │   ├── types/        # 会员类型管理
+│   │   │   └── levels/       # 会员等级管理
+│   │   ├── activities/       # 活动管理页面
+│   │   │   ├── [id]/         # 活动详情 & 编辑 & 签到
+│   │   │   └── create/       # 创建活动
+│   │   └── api/              # API 路由
+│   │       ├── auth/login/   # 模拟登录
+│   │       ├── members/      # 会员 CRUD
+│   │       ├── member-types/ # 会员类型 CRUD
+│   │       ├── member-levels/# 会员等级 CRUD
+│   │       └── activities/   # 活动 CRUD + 报名 + 签到 + 导出
+│   ├── components/layout/    # 布局组件 (Sidebar, Header, Breadcrumb)
+│   ├── hooks/useAuth.tsx     # 认证 Context & Hook
+│   ├── lib/
+│   │   ├── prisma.ts         # Prisma 客户端单例
+│   │   └── api.ts            # 前端 API 请求封装
+│   └── types/index.ts        # TypeScript 类型定义
+├── next.config.ts
+├── package.json
+└── tsconfig.json
 ```
 
-- 项目文件（如 app 目录、pages 目录、components 等）默认初始化到 `src/` 目录下。
+## 开发命令
 
-## 包管理规范
+```bash
+# 安装依赖
+pnpm install
 
-**仅允许使用 pnpm** 作为包管理器，**严禁使用 npm 或 yarn**。
-**常用命令**：
-- 安装依赖：`pnpm add <package>`
-- 安装开发依赖：`pnpm add -D <package>`
-- 安装所有依赖：`pnpm install`
-- 移除依赖：`pnpm remove <package>`
+# 开发环境
+pnpm run dev
 
-## 开发规范
+# 构建
+pnpm run build
 
-### 编码规范
+# 生产启动
+pnpm run start
 
-- 默认按 TypeScript `strict` 心智写代码；优先复用当前作用域已声明的变量、函数、类型和导入，禁止引用未声明标识符或拼错变量名。
-- 禁止隐式 `any` 和 `as any`；函数参数、返回值、解构项、事件对象、`catch` 错误在使用前应有明确类型或先完成类型收窄，并清理未使用的变量和导入。
+# 数据库操作
+npx prisma generate    # 生成 Prisma Client
+npx prisma db push     # 同步 Schema 到数据库
+npx tsx prisma/seed.ts # 运行种子数据
+```
 
-### next.config 配置规范
+## 数据库
 
-- 配置的路径不要写死绝对路径，必须使用 path.resolve(__dirname, ...)、import.meta.dirname 或 process.cwd() 动态拼接。
+- 使用 SQLite (prisma/dev.db)
+- 多租户设计：所有业务表含 org_id 字段，Demo 固定 org_id=1
+- 软删除：业务表含 is_deleted 字段
 
-### Hydration 问题防范
+## 认证
 
-1. 严禁在 JSX 渲染逻辑中直接使用 typeof window、Date.now()、Math.random() 等动态数据。**必须使用 'use client' 并配合 useEffect + useState 确保动态内容仅在客户端挂载后渲染**；同时严禁非法 HTML 嵌套（如 <p> 嵌套 <div>）。
-2. **禁止使用 head 标签**，优先使用 metadata，详见文档：https://nextjs.org/docs/app/api-reference/functions/generate-metadata
-   1. 三方 CSS、字体等资源可在 `globals.css` 中顶部通过 `@import` 引入或使用 next/font
-   2. preload, preconnect, dns-prefetch 通过 ReactDOM 的 preload、preconnect、dns-prefetch 方法引入
-   3. json-ld 可阅读 https://nextjs.org/docs/app/guides/json-ld
+- 模拟登录：任意 11 位手机号 + 任意 6 位验证码
+- 认证信息存储在 localStorage
 
-## UI 设计与组件规范 (UI & Styling Standards)
+## API 路由清单
 
-- 模板默认预装核心组件库 `shadcn/ui`，位于`src/components/ui/`目录下
-- Next.js 项目**必须默认**采用 shadcn/ui 组件、风格和规范，**除非用户指定用其他的组件和规范。**
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | /api/auth/login | 模拟登录 |
+| GET | /api/members | 会员列表（支持分页/搜索/筛选） |
+| POST | /api/members | 新增会员 |
+| GET | /api/members/[id] | 会员详情 |
+| PUT | /api/members/[id] | 编辑会员 |
+| DELETE | /api/members/[id] | 删除会员（软删除） |
+| GET/POST | /api/member-types | 会员类型 CRUD |
+| PUT/DELETE | /api/member-types/[id] | 会员类型编辑/删除 |
+| GET/POST | /api/member-levels | 会员等级 CRUD |
+| PUT/DELETE | /api/member-levels/[id] | 会员等级编辑/删除 |
+| GET | /api/activities | 活动列表 |
+| POST | /api/activities | 创建活动 |
+| GET | /api/activities/[id] | 活动详情 |
+| PUT | /api/activities/[id] | 编辑活动 |
+| DELETE | /api/activities/[id] | 删除活动 |
+| GET/POST | /api/activities/[id]/registrations | 报名列表/新增报名 |
+| PUT | /api/activities/[id]/registrations | 审核报名 |
+| POST | /api/activities/[id]/checkin | 签到 |
+| GET | /api/activities/[id]/export | 导出报名 CSV |
+
+## 设计规范
+
+- 主色：#0E7C7B（深青绿色）
+- 背景：#F7F8FA
+- 卡片圆角：8px
+- 全中文界面

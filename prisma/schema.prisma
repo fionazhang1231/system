@@ -1,0 +1,151 @@
+// Prisma Schema - 连心社群管理平台
+// 多租户设计：所有业务表包含 org_id
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// 机构表
+model Organization {
+  id         Int      @id @default(autoincrement())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  users          User[]
+  memberExts     MemberExt[]
+  memberTypes    MemberType[]
+  memberLevels   MemberLevel[]
+  activities     Activity[]
+  registrations  ActivityRegistration[]
+}
+
+// 用户基础表
+model User {
+  id         Int      @id @default(autoincrement())
+  org_id     Int
+  name       String
+  phone      String
+  email      String?
+  gender     String?  // 男/女
+  birthday   String?  // YYYY-MM-DD
+  address    String?
+  avatar     String?
+  is_deleted Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  org           Organization          @relation(fields: [org_id], references: [id])
+  memberExt     MemberExt?
+  registrations ActivityRegistration[]
+
+  @@index([org_id])
+  @@index([phone])
+}
+
+// 会员扩展表
+model MemberExt {
+  id             Int      @id @default(autoincrement())
+  user_id        Int      @unique
+  org_id         Int
+  member_type_id Int
+  member_level_id Int
+  join_date      String   // YYYY-MM-DD
+  expire_date    String   // YYYY-MM-DD
+  status         String   @default("正常") // 正常/冻结
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  user        User        @relation(fields: [user_id], references: [id])
+  org         Organization @relation(fields: [org_id], references: [id])
+  memberType  MemberType  @relation(fields: [member_type_id], references: [id])
+  memberLevel MemberLevel @relation(fields: [member_level_id], references: [id])
+
+  @@index([org_id])
+}
+
+// 会员类型表
+model MemberType {
+  id          Int      @id @default(autoincrement())
+  org_id      Int
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  org        Organization @relation(fields: [org_id], references: [id])
+  memberExts MemberExt[]
+
+  @@index([org_id])
+}
+
+// 会员等级表
+model MemberLevel {
+  id               Int      @id @default(autoincrement())
+  org_id           Int
+  name             String
+  upgrade_condition String?
+  benefits         String?
+  sort_order       Int      @default(0)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  org        Organization @relation(fields: [org_id], references: [id])
+  memberExts MemberExt[]
+
+  @@index([org_id])
+}
+
+// 活动表
+model Activity {
+  id                  Int      @id @default(autoincrement())
+  org_id              Int
+  title               String
+  type                String   // 线下活动/线上活动/培训/会议/其他
+  cover_image         String?
+  start_time          String   // ISO datetime string
+  end_time            String
+  location            String
+  description         String?
+  status              String   @default("草稿") // 草稿/报名中/进行中/已结束
+  max_participants    Int?
+  registration_start  String?  // ISO datetime string
+  registration_end    String?
+  need_audit          Boolean  @default(false)
+  is_deleted          Boolean  @default(false)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  org           Organization           @relation(fields: [org_id], references: [id])
+  registrations ActivityRegistration[]
+
+  @@index([org_id])
+  @@index([status])
+}
+
+// 活动报名表
+model ActivityRegistration {
+  id              Int      @id @default(autoincrement())
+  activity_id     Int
+  user_id         Int
+  org_id          Int
+  register_time   DateTime @default(now())
+  audit_status    String   @default("待审核") // 待审核/已通过/已拒绝
+  check_in_time   String?  // ISO datetime string
+  check_in_method String?  // 手动/扫码
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  activity  Activity     @relation(fields: [activity_id], references: [id])
+  user      User         @relation(fields: [user_id], references: [id])
+  org       Organization @relation(fields: [org_id], references: [id])
+
+  @@index([activity_id])
+  @@index([user_id])
+  @@index([org_id])
+}
