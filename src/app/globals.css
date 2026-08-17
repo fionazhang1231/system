@@ -3,23 +3,48 @@
 
 /* 连心社群管理平台 - 全局样式 */
 
+/* ========== CSS 变量定义（配色方案） ========== */
 :root {
-  --primary: #0E7C7B;
-  --primary-light: #12999A;
-  --primary-dark: #0A5F5E;
-  --success: #52C41A;
-  --warning: #FAAD14;
-  --danger: #F5222D;
-  --bg: #F7F8FA;
+  /* 主色系 */
+  --primary: #1677FF;
+  --primary-light: #4096FF;
+  --primary-dark: #0958D9;
+
+  /* 辅助色 */
+  --secondary: #0FC6C2;
+
+  /* 状态色 */
+  --success: #00B42A;
+  --warning: #FF7D00;
+  --danger: #F53F3F;
+
+  /* 侧边栏 */
+  --sidebar-bg: #001529;
+  --sidebar-text: rgba(255, 255, 255, 0.65);
+  --sidebar-text-active: #FFFFFF;
+  --sidebar-selected-bg: #1677FF;
+
+  /* 顶部栏 */
+  --header-bg: #FFFFFF;
+
+  /* 内容区 */
+  --content-bg: #F5F7FA;
+  --card-bg: #FFFFFF;
+
+  /* 文字 */
   --text-primary: #1D2129;
   --text-secondary: #4E5969;
   --text-tertiary: #86909C;
+
+  /* 边框/分割线 */
   --border: #E5E6EB;
+
+  /* 阴影 */
   --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 body {
-  background-color: var(--bg);
+  background-color: var(--content-bg);
   color: var(--text-primary);
   font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
@@ -27,13 +52,13 @@ body {
   padding: 0;
 }
 
-/* Arco Design 主题覆盖 */
+/* ========== Arco Design 主题覆盖（主色） ========== */
 :root {
-  --arcoblue-6: #0E7C7B;
-  --primary-6: #0E7C7B;
+  --arcoblue-6: var(--primary);
+  --primary-6: var(--primary);
 }
 
-/* 全局覆盖 Arco 主色 */
+/* 主按钮 */
 .arco-btn-primary {
   background-color: var(--primary) !important;
   border-color: var(--primary) !important;
@@ -44,10 +69,21 @@ body {
   border-color: var(--primary-light) !important;
 }
 
+.arco-btn-primary:active {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
+}
+
+/* 链接 */
 .arco-link {
   color: var(--primary);
 }
 
+.arco-link:hover {
+  color: var(--primary-light);
+}
+
+/* 菜单选中 */
 .arco-menu-item.arco-menu-selected .arco-menu-icon,
 .arco-menu-item.arco-menu-selected {
   color: var(--primary);
@@ -57,83 +93,112 @@ body {
   background-color: var(--primary);
 }
 
+/* 深色侧边栏菜单 */
+.arco-menu-dark {
+  background-color: var(--sidebar-bg) !important;
+}
+
+.arco-menu-dark .arco-menu-item,
+.arco-menu-dark .arco-menu-inline-header,
+.arco-menu-dark .arco-menu-pop-header {
+  color: var(--sidebar-text) !important;
+}
+
+.arco-menu-dark .arco-menu-item:hover,
+.arco-menu-dark .arco-menu-inline-header:hover,
+.arco-menu-dark .arco-menu-pop-header:hover {
+  color: var(--sidebar-text-active) !important;
+}
+
+.arco-menu-dark .arco-menu-item.arco-menu-selected {
+  background-color: var(--sidebar-selected-bg) !important;
+  color: var(--sidebar-text-active) !important;
+}
+
+.arco-menu-dark .arco-menu-item.arco-menu-selected .arco-menu-icon {
+  color: var(--sidebar-text-active) !important;
+}
+
+.arco-menu-dark .arco-menu-inline .arco-menu-item:hover,
+.arco-menu-dark .arco-menu-inline .arco-menu-inline-header:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 复选框/单选框 */
 .arco-checkbox:checked .arco-checkbox-icon,
 .arco-radio:checked .arco-radio-icon {
   border-color: var(--primary);
   background-color: var(--primary);
 }
 
+/* 分页 */
 .arco-pagination-item.arco-pagination-item-active {
   border-color: var(--primary);
   background-color: var(--primary);
 }
 
+/* 标签 */
 .arco-tag {
   border-radius: 4px;
 }
 
-/* 卡片通用样式 */
+/* 输入框聚焦 */
+.arco-input:focus,
+.arco-input-focused {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1) !important;
+}
+
+/* 选择器聚焦 */
+.arco-select-focused .arco-select-view,
+.arco-select-focused .arco-select-view:hover {
+  border-color: var(--primary) !important;
+}
+
+/* 开关 */
+.arco-switch-checked {
+  background-color: var(--primary) !important;
+}
+
+/* 表格 */
+.arco-table-th {
+  background-color: #FAFBFC;
+  font-weight: 600;
+}
+
+/* 步骤条 */
+.arco-steps-item-active .arco-steps-icon {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+.arco-steps-item-process .arco-steps-icon {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+/* 消息提示 */
+.arco-message-success .arco-message-icon {
+  color: var(--success);
+}
+
+.arco-message-error .arco-message-icon {
+  color: var(--danger);
+}
+
+.arco-message-warning .arco-message-icon {
+  color: var(--warning);
+}
+
+/* ========== 卡片通用样式 ========== */
 .site-card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 8px;
   box-shadow: var(--card-shadow);
   padding: 24px;
 }
 
-/* 页面容器 */
-.page-container {
-  padding: 24px;
-  min-height: calc(100vh - 56px);
-}
-
-/* 表格操作按钮 */
-.action-btn {
-  padding: 0 4px;
-  cursor: pointer;
-  color: var(--primary);
-  font-size: 14px;
-  background: none;
-  border: none;
-}
-
-.action-btn:hover {
-  color: var(--primary-light);
-}
-
-.action-btn.danger {
-  color: var(--danger);
-}
-
-/* 状态标签 */
-.status-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-tag.normal {
-  background: #E8FFEA;
-  color: #00B42A;
-}
-
-.status-tag.frozen {
-  background: #FFF3E8;
-  color: #FF7D00;
-}
-
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 0;
-  color: var(--text-tertiary);
-}
-
-/* 滚动条美化 */
+/* ========== 滚动条样式 ========== */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -144,6 +209,27 @@ body {
   border-radius: 3px;
 }
 
+::-webkit-scrollbar-thumb:hover {
+  background: #A9AEB8;
+}
+
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* ========== 表格操作栏固定 ========== */
+.arco-table-td.arco-table-col-fixed-right {
+  background: #fff;
+}
+
+/* ========== 批量操作提示条 ========== */
+.batch-bar {
+  background: #E8F3FF;
+  border: 1px solid #BEDAFF;
+  border-radius: 6px;
+  padding: 8px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }

@@ -10,8 +10,10 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
     const keyword = searchParams.get('keyword') || '';
-    const memberTypeId = searchParams.get('memberTypeId');
-    const membershipStatus = searchParams.get('membershipStatus');
+    const memberNo = searchParams.get('member_no') || '';
+    const memberTypeId = searchParams.get('member_type');
+    const memberLevelId = searchParams.get('member_level');
+    const membershipStatus = searchParams.get('membership_status');
 
     // 构建查询条件
     const where: Record<string, unknown> = {
@@ -26,12 +28,39 @@ export async function GET(request: Request) {
       ];
     }
 
+    // memberExt 关联筛选条件
+    const memberExtWhere: Record<string, unknown> = {};
+    if (memberNo) {
+      memberExtWhere.member_no = { contains: memberNo };
+    }
+    if (memberTypeId) {
+      memberExtWhere.member_type_id = parseInt(memberTypeId);
+    }
+    if (memberLevelId) {
+      memberExtWhere.member_level_id = parseInt(memberLevelId);
+    }
+    if (membershipStatus) {
+      memberExtWhere.membership_status = membershipStatus;
+    }
+
     // 先查询总数
-    const totalCount = await prisma.user.count({ where });
+    const totalCount = await prisma.user.count({
+      where: {
+        ...where,
+        ...(Object.keys(memberExtWhere).length > 0
+          ? { memberExt: memberExtWhere }
+          : {}),
+      },
+    });
 
     // 查询会员列表（带会员扩展信息）
     const users = await prisma.user.findMany({
-      where,
+      where: {
+        ...where,
+        ...(Object.keys(memberExtWhere).length > 0
+          ? { memberExt: memberExtWhere }
+          : {}),
+      },
       include: {
         memberExt: {
           include: {
@@ -45,21 +74,8 @@ export async function GET(request: Request) {
       take: pageSize,
     });
 
-    // 过滤条件
-    let filteredUsers = users;
-    if (memberTypeId) {
-      filteredUsers = filteredUsers.filter(
-        (u) => u.memberExt?.member_type_id === parseInt(memberTypeId)
-      );
-    }
-    if (membershipStatus) {
-      filteredUsers = filteredUsers.filter(
-        (u) => u.memberExt?.membership_status === membershipStatus
-      );
-    }
-
     // 格式化返回数据（对齐需求文档字段）
-    const members = filteredUsers.map((u) => ({
+    const members = users.map((u) => ({
       id: u.id,
       name: u.name,
       phone: u.phone,

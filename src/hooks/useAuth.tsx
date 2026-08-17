@@ -2,9 +2,15 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 
+interface UserInfo {
+  name: string;
+  phone: string;
+}
+
 interface AuthContextType {
   isLoggedIn: boolean;
   phone: string;
+  user: UserInfo;
   login: (phone: string) => void;
   logout: () => void;
 }
@@ -12,6 +18,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   phone: '',
+  user: { name: '管理员', phone: '' },
   login: () => {},
   logout: () => {},
 });
@@ -40,8 +47,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPhone('');
   }, []);
 
+  const user: UserInfo = { name: '管理员', phone };
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, phone, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, phone, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

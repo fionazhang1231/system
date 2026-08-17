@@ -70,3 +70,11 @@ export async function apiPut<T>(url: string, body?: unknown): Promise<ApiRespons
 export async function apiDelete<T>(url: string): Promise<ApiResponse<T>> {
   return request<T>(`/api${url}`, { method: 'DELETE' });
 }
+
+/** 统一 API 对象 */
+export const api = {
+  get: apiGet,
+  post: apiPost,
+  put: apiPut,
+  delete: apiDelete,
+};

@@ -39,12 +39,12 @@ export default function DashboardShell({
         collapsible
         trigger={null}
         breakpoint="xl"
-        width={220}
+        width={240}
         collapsedWidth={64}
         style={{
-          boxShadow: '2px 0 8px rgba(0,0,0,0.06)',
           zIndex: 10,
-          overflow: 'auto',
+          overflow: 'hidden',
+          background: '#001529',
         }}
       >
         <Sidebar collapsed={collapsed} />
@@ -53,7 +53,7 @@ export default function DashboardShell({
         <HeaderLayout style={{ padding: 0, height: 56 }}>
           <Header collapsed={collapsed} onCollapseChange={setCollapsed} />
         </HeaderLayout>
-        <Content style={{ overflow: 'auto', background: '#F7F8FA' }}>
+        <Content style={{ overflow: 'auto', background: '#F5F7FA' }}>
           {children}
         </Content>
       </Layout>
