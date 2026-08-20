@@ -3,22 +3,24 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Form, Input, Button, Message, Tabs, Select } from '@arco-design/web-react';
-import { IconPhone, IconLock, IconUser } from '@arco-design/web-react/icon';
+import { IconLock, IconUser } from '@arco-design/web-react/icon';
 import { useAuth } from '@/hooks/useAuth';
 import { phoneRegionOptions, getPhoneValidator, getPhoneMaxLength, getPhonePlaceholder } from '@/lib/phone';
 
 /** 登录页面：支持账号密码 + 手机验证码两种方式 */
 export default function LoginPage() {
-  const [form] = Form.useForm();
+  const [accountForm] = Form.useForm();
+  const [phoneForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [phoneRegion, setPhoneRegion] = useState('+86');
+  const [activeTab, setActiveTab] = useState('account');
   const router = useRouter();
   const { login } = useAuth();
 
   // 发送验证码（Mock）
   const handleSendCode = async () => {
-    const phone = form.getFieldValue('phone');
+    const phone = phoneForm.getFieldValue('phone');
     if (!phone) {
       Message.warning('请输入手机号');
       return;
@@ -41,35 +43,29 @@ export default function LoginPage() {
     }, 1000);
   };
 
-  // 手机验证码登录
-  const handlePhoneLogin = async (values: { phone: string; code: string }) => {
-    if (!values.phone) {
-      Message.warning('请输入手机号');
+  // 账号密码登录
+  const handleAccountLogin = async () => {
+    try {
+      const errors = await accountForm.validate();
+      if (errors && Object.keys(errors).length > 0) return;
+    } catch {
       return;
     }
-    const validator = getPhoneValidator(phoneRegion);
-    if (!validator(values.phone)) {
-      Message.warning('请输入正确格式的手机号');
-      return;
-    }
-    if (!values.code || values.code.length !== 6) {
-      Message.warning('请输入6位验证码');
-      return;
-    }
+
+    const values = accountForm.getFieldsValue();
+    const username = values.username as string;
+    const password = values.password as string;
+
     setLoading(true);
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: 'phone',
-          phone: `${phoneRegion}${values.phone}`,
-          code: values.code,
-        }),
+        body: JSON.stringify({ mode: 'account', username, password }),
       });
       const data = await res.json();
       if (data.success) {
-        login(`${phoneRegion}${values.phone}`);
+        login(username);
         Message.success('登录成功');
         router.push('/members');
       } else {
@@ -82,30 +78,33 @@ export default function LoginPage() {
     }
   };
 
-  // 账号密码登录
-  const handleAccountLogin = async (values: { username: string; password: string }) => {
-    if (!values.username) {
-      Message.warning('请输入账号');
+  // 手机验证码登录
+  const handlePhoneLogin = async () => {
+    try {
+      const errors = await phoneForm.validate();
+      if (errors && Object.keys(errors).length > 0) return;
+    } catch {
       return;
     }
-    if (!values.password) {
-      Message.warning('请输入密码');
-      return;
-    }
+
+    const values = phoneForm.getFieldsValue();
+    const phone = values.phone as string;
+    const code = values.code as string;
+
     setLoading(true);
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mode: 'account',
-          username: values.username,
-          password: values.password,
+          mode: 'phone',
+          phone: `${phoneRegion}${phone}`,
+          code,
         }),
       });
       const data = await res.json();
       if (data.success) {
-        login(values.username);
+        login(`${phoneRegion}${phone}`);
         Message.success('登录成功');
         router.push('/members');
       } else {
@@ -229,14 +228,15 @@ export default function LoginPage() {
           </div>
 
           <Tabs
-            defaultActiveTab="account"
+            activeTab={activeTab}
+            onChange={setActiveTab}
             style={{ maxWidth: 380 }}
           >
             {/* 账号密码登录 - 默认Tab */}
             <Tabs.TabPane key="account" title="账号密码">
               <Form
+                form={accountForm}
                 layout="vertical"
-                onSubmit={handleAccountLogin}
                 style={{ marginTop: 16 }}
               >
                 <Form.Item
@@ -266,10 +266,10 @@ export default function LoginPage() {
                 <Form.Item style={{ marginTop: 8 }}>
                   <Button
                     type="primary"
-                    htmlType="submit"
                     long
                     size="large"
                     loading={loading}
+                    onClick={handleAccountLogin}
                     style={{ height: 44, fontSize: 16 }}
                   >
                     登 录
@@ -281,23 +281,21 @@ export default function LoginPage() {
             {/* 手机验证码登录 */}
             <Tabs.TabPane key="phone" title="手机验证码">
               <Form
-                form={form}
+                form={phoneForm}
                 layout="vertical"
-                onSubmit={handlePhoneLogin}
                 style={{ marginTop: 16 }}
               >
                 <Form.Item
                   field="phone"
-                  rules={[
-                    { required: true, message: '请输入手机号' },
-                  ]}
+                  initialValue="13800138000"
+                  rules={[{ required: true, message: '请输入手机号' }]}
                 >
                   <Input
-                    prefix={
+                    addBefore={
                       <Select
                         value={phoneRegion}
                         onChange={setPhoneRegion}
-                        style={{ width: 110, border: 'none', boxShadow: 'none' }}
+                        style={{ width: 110 }}
                         options={phoneRegionOptions}
                       />
                     }
@@ -337,10 +335,10 @@ export default function LoginPage() {
                 <Form.Item style={{ marginTop: 8 }}>
                   <Button
                     type="primary"
-                    htmlType="submit"
                     long
                     size="large"
                     loading={loading}
+                    onClick={handlePhoneLogin}
                     style={{ height: 44, fontSize: 16 }}
                   >
                     登 录
