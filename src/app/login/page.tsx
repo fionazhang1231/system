@@ -29,7 +29,7 @@ export default function LoginPage() {
       return;
     }
     setCountdown(60);
-    Message.success('验证码已发送（Demo模式：任意6位数字即可登录）');
+    Message.info('验证码已发送，Demo模式请输入：123456');
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -61,7 +61,11 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: `${phoneRegion}${values.phone}`, code: values.code }),
+        body: JSON.stringify({
+          mode: 'phone',
+          phone: `${phoneRegion}${values.phone}`,
+          code: values.code,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -93,7 +97,11 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: values.username, code: values.password }),
+        body: JSON.stringify({
+          mode: 'account',
+          username: values.username,
+          password: values.password,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -189,7 +197,7 @@ export default function LoginPage() {
         <div
           style={{
             flex: 1,
-            padding: '48px 48px',
+            padding: '40px 48px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
@@ -198,14 +206,78 @@ export default function LoginPage() {
           <h2 style={{ fontSize: 24, fontWeight: 600, color: '#1D2129', margin: '0 0 8px 0' }}>
             欢迎登录
           </h2>
-          <p style={{ color: '#86909C', margin: '0 0 24px 0', fontSize: 14 }}>
+          <p style={{ color: '#86909C', margin: '0 0 20px 0', fontSize: 14 }}>
             请选择登录方式进入管理后台
           </p>
 
+          {/* Demo 默认账号提示 */}
+          <div
+            style={{
+              background: '#E8F3FF',
+              border: '1px solid #BEDAFF',
+              borderRadius: 8,
+              padding: '10px 14px',
+              marginBottom: 16,
+              fontSize: 13,
+              color: '#1677FF',
+              lineHeight: 1.6,
+            }}
+          >
+            <b>Demo 默认账号：</b>admin / admin123
+            <br />
+            <b>手机验证码：</b>任意手机号 + 123456
+          </div>
+
           <Tabs
-            defaultActiveTab="phone"
+            defaultActiveTab="account"
             style={{ maxWidth: 380 }}
           >
+            {/* 账号密码登录 - 默认Tab */}
+            <Tabs.TabPane key="account" title="账号密码">
+              <Form
+                layout="vertical"
+                onSubmit={handleAccountLogin}
+                style={{ marginTop: 16 }}
+              >
+                <Form.Item
+                  field="username"
+                  initialValue="admin"
+                  rules={[{ required: true, message: '请输入账号' }]}
+                >
+                  <Input
+                    prefix={<IconUser />}
+                    placeholder="请输入账号"
+                    size="large"
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  field="password"
+                  initialValue="admin123"
+                  rules={[{ required: true, message: '请输入密码' }]}
+                >
+                  <Input.Password
+                    prefix={<IconLock />}
+                    placeholder="请输入密码"
+                    size="large"
+                  />
+                </Form.Item>
+
+                <Form.Item style={{ marginTop: 8 }}>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    long
+                    size="large"
+                    loading={loading}
+                    style={{ height: 44, fontSize: 16 }}
+                  >
+                    登 录
+                  </Button>
+                </Form.Item>
+              </Form>
+            </Tabs.TabPane>
+
             {/* 手机验证码登录 */}
             <Tabs.TabPane key="phone" title="手机验证码">
               <Form
@@ -237,6 +309,7 @@ export default function LoginPage() {
 
                 <Form.Item
                   field="code"
+                  initialValue="123456"
                   rules={[
                     { required: true, message: '请输入验证码' },
                     { length: 6, message: '请输入6位验证码' },
@@ -275,55 +348,7 @@ export default function LoginPage() {
                 </Form.Item>
               </Form>
             </Tabs.TabPane>
-
-            {/* 账号密码登录 */}
-            <Tabs.TabPane key="account" title="账号密码">
-              <Form
-                layout="vertical"
-                onSubmit={handleAccountLogin}
-                style={{ marginTop: 16 }}
-              >
-                <Form.Item
-                  field="username"
-                  rules={[{ required: true, message: '请输入账号' }]}
-                >
-                  <Input
-                    prefix={<IconUser />}
-                    placeholder="请输入账号 / 手机号"
-                    size="large"
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  field="password"
-                  rules={[{ required: true, message: '请输入密码' }]}
-                >
-                  <Input.Password
-                    prefix={<IconLock />}
-                    placeholder="请输入密码"
-                    size="large"
-                  />
-                </Form.Item>
-
-                <Form.Item style={{ marginTop: 8 }}>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    long
-                    size="large"
-                    loading={loading}
-                    style={{ height: 44, fontSize: 16 }}
-                  >
-                    登 录
-                  </Button>
-                </Form.Item>
-              </Form>
-            </Tabs.TabPane>
           </Tabs>
-
-          <p style={{ color: '#C9CDD4', fontSize: 12, marginTop: 16 }}>
-            Demo模式：手机验证码登录 - 任意手机号 + 任意6位验证码
-          </p>
         </div>
       </div>
     </div>
