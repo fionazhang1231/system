@@ -10,26 +10,20 @@ export const isHongKongPhone = (phone: string): boolean => {
   return /^[569]\d{7}$/.test(phone);
 };
 
-// 澳门手机号：8位数字，以6开头
-export const isMacauPhone = (phone: string): boolean => {
-  return /^6\d{7}$/.test(phone);
-};
-
-// 校验手机号（支持大陆、香港、澳门）
+// 校验手机号（支持大陆、香港）
 export const isValidPhone = (phone: string): boolean => {
-  return isMainlandPhone(phone) || isHongKongPhone(phone) || isMacauPhone(phone);
+  return isMainlandPhone(phone) || isHongKongPhone(phone);
 };
 
 // 获取手机号提示信息
 export const getPhoneHint = (): string => {
-  return '支持大陆11位 / 香港澳门8位手机号';
+  return '支持大陆11位 / 香港8位手机号';
 };
 
 // 手机号区号选项
 export const phoneRegionOptions = [
   { label: '+86 中国大陆', value: '+86' },
   { label: '+852 中国香港', value: '+852' },
-  { label: '+853 中国澳门', value: '+853' },
 ];
 
 // 根据区号获取校验函数
@@ -39,8 +33,6 @@ export const getPhoneValidator = (region: string) => {
       return isMainlandPhone;
     case '+852':
       return isHongKongPhone;
-    case '+853':
-      return isMacauPhone;
     default:
       return isValidPhone;
   }
@@ -52,7 +44,6 @@ export const getPhoneMaxLength = (region: string): number => {
     case '+86':
       return 11;
     case '+852':
-    case '+853':
       return 8;
     default:
       return 11;
