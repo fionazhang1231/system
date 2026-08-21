@@ -11,6 +11,7 @@ export async function GET(request: Request) {
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
     const keyword = searchParams.get('keyword') || '';
     const status = searchParams.get('status');
+    const category = searchParams.get('category');
 
     const where: Record<string, unknown> = {
       org_id: ORG_ID,
@@ -22,6 +23,9 @@ export async function GET(request: Request) {
     }
     if (status) {
       where.status = status;
+    }
+    if (category) {
+      where.category = category;
     }
 
     const [total, activities] = await Promise.all([

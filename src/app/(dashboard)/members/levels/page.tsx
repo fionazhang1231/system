@@ -200,7 +200,7 @@ export default function MemberLevelsPage() {
           data={filteredData}
           loading={loading}
           pagination={false}
-          scroll={{ x: 900 }}
+          scroll={{ x: 'max-content' }}
           border
         />
       </div>

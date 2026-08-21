@@ -234,7 +234,7 @@ export default function MemberTypesPage() {
           data={filteredData}
           loading={loading}
           pagination={false}
-          scroll={{ x: 1100 }}
+          scroll={{ x: 'max-content' }}
           border
         />
       </div>
