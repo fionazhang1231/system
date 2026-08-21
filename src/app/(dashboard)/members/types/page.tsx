@@ -1,10 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Table, Button, Modal, Form, Input, Message, Space, Tag, Select, InputNumber, Switch,
+  Tooltip,
 } from '@arco-design/web-react';
-import { IconPlus } from '@arco-design/web-react/icon';
+import {
+  IconPlus, IconEdit, IconDelete, IconRefresh, IconSearch,
+  IconQuestionCircle,
+} from '@arco-design/web-react/icon';
 import type { ColumnProps } from '@arco-design/web-react/es/Table';
 import BreadcrumbNav from '@/components/layout/Breadcrumb';
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
@@ -22,6 +26,17 @@ interface MemberTypeItem {
   created_at: string;
 }
 
+const feeModeMap: Record<string, string> = {
+  free: '免费', yearly: '年费', monthly: '月费', lifetime: '终身',
+};
+const auditModeMap: Record<string, string> = {
+  none: '无需审核', single: '一级审核', double: '两级审核',
+};
+const typeKeyMap: Record<string, string> = {
+  individual: '个人会员', group: '团体会员', student: '学生会员',
+  honorary: '荣誉会员', volunteer: '志愿者', custom: '自定义',
+};
+
 /** 会员类型管理页 */
 export default function MemberTypesPage() {
   const [data, setData] = useState<MemberTypeItem[]>([]);
@@ -30,6 +45,11 @@ export default function MemberTypesPage() {
   const [editingItem, setEditingItem] = useState<MemberTypeItem | null>(null);
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
+
+  // 筛选条件
+  const [keyword, setKeyword] = useState('');
+  const [feeModeFilter, setFeeModeFilter] = useState<string>('');
+  const [auditFilter, setAuditFilter] = useState<string>('');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -42,6 +62,30 @@ export default function MemberTypesPage() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // 前端筛选
+  const filteredData = useMemo(() => {
+    let result = data;
+    if (keyword) {
+      const kw = keyword.toLowerCase();
+      result = result.filter(
+        (item) => item.name.toLowerCase().includes(kw) || item.type_key.toLowerCase().includes(kw)
+      );
+    }
+    if (feeModeFilter) {
+      result = result.filter((item) => item.fee_mode === feeModeFilter);
+    }
+    if (auditFilter === 'yes') {
+      result = result.filter((item) => item.need_audit);
+    } else if (auditFilter === 'no') {
+      result = result.filter((item) => !item.need_audit);
+    }
+    return result;
+  }, [data, keyword, feeModeFilter, auditFilter]);
+
+  const handleReset = () => {
+    setKeyword(''); setFeeModeFilter(''); setAuditFilter('');
+  };
 
   const handleAdd = () => {
     setEditingItem(null);
@@ -63,19 +107,15 @@ export default function MemberTypesPage() {
     setModalVisible(true);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (record: MemberTypeItem) => {
     Modal.confirm({
       title: '确认删除',
-      content: '确定要删除该会员类型吗？',
+      content: `确定要删除会员类型「${record.name}」吗？`,
       okButtonProps: { status: 'danger' },
       onOk: async () => {
-        const res = await apiDelete(`/member-types/${id}`);
-        if (res.success) {
-          Message.success('删除成功');
-          fetchData();
-        } else {
-          Message.error(res.error || '删除失败');
-        }
+        const res = await apiDelete(`/member-types/${record.id}`);
+        if (res.success) { Message.success('删除成功'); fetchData(); }
+        else { Message.error(res.error || '删除失败'); }
       },
     });
   };
@@ -92,40 +132,55 @@ export default function MemberTypesPage() {
       }
       if (res.success) {
         Message.success(editingItem ? '更新成功' : '创建成功');
-        setModalVisible(false);
-        fetchData();
-      } else {
-        Message.error(res.error || '操作失败');
-      }
-    } catch {
-      // validation error
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const feeModeMap: Record<string, string> = {
-    free: '免费', yearly: '年费', monthly: '月费', lifetime: '终身',
-  };
-  const auditModeMap: Record<string, string> = {
-    none: '无需审核', single: '一级审核', double: '两级审核',
+        setModalVisible(false); fetchData();
+      } else { Message.error(res.error || '操作失败'); }
+    } catch { /* validation */ } finally { setSubmitting(false); }
   };
 
   const columns: ColumnProps<MemberTypeItem>[] = [
     { title: '类型名称', dataIndex: 'name', width: 120 },
-    { title: '类型标识', dataIndex: 'type_key', width: 100, render: (_, r) => <Tag>{r.type_key}</Tag> },
-    { title: '收费模式', dataIndex: 'fee_mode', width: 100, render: (_, r) => feeModeMap[r.fee_mode] || r.fee_mode },
-    { title: '费用', dataIndex: 'fee_amount', width: 80, render: (_, r) => r.fee_amount > 0 ? `¥${r.fee_amount}` : '免费' },
-    { title: '需审核', dataIndex: 'need_audit', width: 80, render: (_, r) => r.need_audit ? <Tag color="orange">是</Tag> : <Tag color="green">否</Tag> },
-    { title: '审核模式', dataIndex: 'audit_mode', width: 100, render: (_, r) => auditModeMap[r.audit_mode] || r.audit_mode },
-    { title: '排序', dataIndex: 'sort_order', width: 60 },
+    {
+      title: '类型标识', dataIndex: 'type_key', width: 110,
+      render: (_, r) => <Tag>{r.type_key}</Tag>,
+    },
+    {
+      title: '收费模式', dataIndex: 'fee_mode', width: 100,
+      render: (_, r) => feeModeMap[r.fee_mode] || r.fee_mode,
+    },
+    {
+      title: '费用', dataIndex: 'fee_amount', width: 90, align: 'right',
+      render: (_, r) => r.fee_amount > 0 ? `¥${r.fee_amount.toLocaleString()}` : '免费',
+    },
+    {
+      title: '需审核', dataIndex: 'need_audit', width: 80, align: 'center',
+      render: (_, r) => r.need_audit ? <Tag color="orange">是</Tag> : <Tag color="green">否</Tag>,
+    },
+    {
+      title: '审核模式', dataIndex: 'audit_mode', width: 100,
+      render: (_, r) => auditModeMap[r.audit_mode] || r.audit_mode,
+    },
+    {
+      title: (
+        <Space size={4}>
+          <span>排序</span>
+          <Tooltip content="数字越小越靠前，用于控制用户侧的展示顺序">
+            <IconQuestionCircle style={{ color: '#86909C', cursor: 'help' }} />
+          </Tooltip>
+        </Space>
+      ),
+      dataIndex: 'sort_order', width: 80, align: 'center',
+    },
     { title: '描述', dataIndex: 'description', render: (_, r) => r.description || '-' },
     {
-      title: '操作', dataIndex: 'operations', width: 130, fixed: 'right' as const,
+      title: '操作', dataIndex: 'operations', width: 160, align: 'center', fixed: 'right' as const,
       render: (_, record) => (
-        <Space>
-          <button className="action-btn" onClick={() => handleEdit(record)}>编辑</button>
-          <button className="action-btn danger" onClick={() => handleDelete(record.id)}>删除</button>
+        <Space size={4}>
+          <Button type="text" size="small" icon={<IconEdit />} onClick={() => handleEdit(record)}>
+            编辑
+          </Button>
+          <Button type="text" size="small" status="danger" icon={<IconDelete />} onClick={() => handleDelete(record)}>
+            删除
+          </Button>
         </Space>
       ),
     },
@@ -135,6 +190,46 @@ export default function MemberTypesPage() {
     <div style={{ padding: 24 }}>
       <BreadcrumbNav items={[{ title: '会员管理' }, { title: '会员类型' }]} />
 
+      {/* 筛选区 */}
+      <div className="site-card" style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+          <Input
+            placeholder="类型名称 / 类型标识"
+            prefix={<IconSearch />}
+            style={{ width: 220 }}
+            value={keyword}
+            onChange={(v) => setKeyword(v)}
+            allowClear
+          />
+          <Select
+            placeholder="请选择收费模式"
+            style={{ width: 150 }}
+            value={feeModeFilter || undefined}
+            onChange={(v) => setFeeModeFilter(v || '')}
+            allowClear
+            options={[
+              { value: 'free', label: '免费' },
+              { value: 'yearly', label: '年费' },
+              { value: 'monthly', label: '月费' },
+              { value: 'lifetime', label: '终身' },
+            ]}
+          />
+          <Select
+            placeholder="是否需要审核"
+            style={{ width: 150 }}
+            value={auditFilter || undefined}
+            onChange={(v) => setAuditFilter(v || '')}
+            allowClear
+            options={[
+              { value: 'yes', label: '需要审核' },
+              { value: 'no', label: '无需审核' },
+            ]}
+          />
+          <Button icon={<IconRefresh />} onClick={handleReset}>重置</Button>
+        </div>
+      </div>
+
+      {/* 表格区 */}
       <div className="site-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
           <h3 style={{ margin: 0, fontSize: 16 }}>会员类型列表</h3>
@@ -144,10 +239,11 @@ export default function MemberTypesPage() {
         <Table
           rowKey="id"
           columns={columns}
-          data={data}
+          data={filteredData}
           loading={loading}
           pagination={false}
           scroll={{ x: 1100 }}
+          border
         />
       </div>
 
@@ -189,7 +285,18 @@ export default function MemberTypesPage() {
               { value: 'double', label: '两级审核' },
             ]} />
           </Form.Item>
-          <Form.Item field="sort_order" label="排序" initialValue={0}>
+          <Form.Item
+            field="sort_order"
+            label={
+              <Space size={4}>
+                <span>排序</span>
+                <Tooltip content="数字越小越靠前，用于控制用户侧的展示顺序">
+                  <IconQuestionCircle style={{ color: '#86909C', cursor: 'help' }} />
+                </Tooltip>
+              </Space>
+            }
+            initialValue={0}
+          >
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
         </Form>

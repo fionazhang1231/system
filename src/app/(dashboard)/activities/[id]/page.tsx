@@ -137,8 +137,8 @@ export default function ActivityDetailPage() {
         if (record.audit_status === '待审核') {
           return (
             <Space>
-              <button className="action-btn" onClick={() => handleAudit(record.id, '已通过')}>通过</button>
-              <button className="action-btn danger" onClick={() => handleAudit(record.id, '已拒绝')}>拒绝</button>
+              <Button type="text" size="small" onClick={() => handleAudit(record.id, '已通过')}>通过</Button>
+              <Button type="text" size="small" status="danger" onClick={() => handleAudit(record.id, '已拒绝')}>拒绝</Button>
             </Space>
           );
         }
