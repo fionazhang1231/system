@@ -32,10 +32,6 @@ const feeModeMap: Record<string, string> = {
 const auditModeMap: Record<string, string> = {
   none: '无需审核', single: '一级审核', double: '两级审核',
 };
-const typeKeyMap: Record<string, string> = {
-  individual: '个人会员', group: '团体会员', student: '学生会员',
-  honorary: '荣誉会员', volunteer: '志愿者', custom: '自定义',
-};
 
 /** 会员类型管理页 */
 export default function MemberTypesPage() {
@@ -69,7 +65,7 @@ export default function MemberTypesPage() {
     if (keyword) {
       const kw = keyword.toLowerCase();
       result = result.filter(
-        (item) => item.name.toLowerCase().includes(kw) || item.type_key.toLowerCase().includes(kw)
+        (item) => item.name.toLowerCase().includes(kw)
       );
     }
     if (feeModeFilter) {
@@ -140,10 +136,6 @@ export default function MemberTypesPage() {
   const columns: ColumnProps<MemberTypeItem>[] = [
     { title: '类型名称', dataIndex: 'name', width: 120 },
     {
-      title: '类型标识', dataIndex: 'type_key', width: 110,
-      render: (_, r) => <Tag>{r.type_key}</Tag>,
-    },
-    {
       title: '收费模式', dataIndex: 'fee_mode', width: 100,
       render: (_, r) => feeModeMap[r.fee_mode] || r.fee_mode,
     },
@@ -194,7 +186,7 @@ export default function MemberTypesPage() {
       <div className="site-card" style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
           <Input
-            placeholder="类型名称 / 类型标识"
+            placeholder="类型名称"
             prefix={<IconSearch />}
             style={{ width: 220 }}
             value={keyword}

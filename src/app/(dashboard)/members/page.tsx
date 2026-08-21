@@ -95,8 +95,8 @@ export default function MembersPage() {
   const [types, setTypes] = useState<TypeOption[]>([]);
   const [levels, setLevels] = useState<LevelOption[]>([]);
 
-  // 跨页多选
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  // 跨页多选（rowKey 为 number 类型 id，selectedKeys 必须用 number 匹配）
+  const [selectedKeys, setSelectedKeys] = useState<number[]>([]);
   const [importVisible, setImportVisible] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
 
@@ -215,10 +215,26 @@ export default function MembersPage() {
     });
   };
 
-  // 导出
-  const handleExportSelected = () => {
+  // 导出（统一走列表 API，避免详情 API 嵌套结构导致字段为空）
+  const handleExportSelected = async () => {
     if (selectedKeys.length === 0) { Message.warning('请先选择要导出的会员'); return; }
-    exportCSV(selectedKeys);
+    Message.loading({ content: '正在导出...', duration: 0, id: 'export-sel' });
+    try {
+      // 从列表 API 拉取全部数据，再按选中 ID 过滤
+      const allData: MemberItem[] = [];
+      let currentPage = 1; let hasMore = true;
+      while (hasMore) {
+        const params = new URLSearchParams();
+        params.set('page', String(currentPage)); params.set('pageSize', '200');
+        const res = await apiGet<MemberItem[]>(`/members?${params.toString()}`);
+        if (res.success && res.data && res.data.length > 0) {
+          allData.push(...res.data); hasMore = res.data.length === 200; currentPage++;
+        } else { hasMore = false; }
+      }
+      const selected = allData.filter((m) => selectedKeys.includes(m.id));
+      exportCSVData(selected); Message.clear();
+      Message.success(`成功导出 ${selected.length} 条会员数据`);
+    } catch { Message.clear(); Message.error('导出失败'); }
   };
   const handleExportAll = async () => {
     Message.loading({ content: '正在导出全部数据...', duration: 0, id: 'export-all' });
@@ -237,30 +253,25 @@ export default function MembersPage() {
       Message.success(`成功导出 ${allData.length} 条会员数据`);
     } catch { Message.clear(); Message.error('导出失败'); }
   };
-  const exportCSV = async (ids: string[]) => {
-    Message.loading({ content: '正在导出...', duration: 0, id: 'export-sel' });
-    try {
-      const allData: MemberItem[] = [];
-      for (let i = 0; i < ids.length; i += 50) {
-        const batch = ids.slice(i, i + 50);
-        const results = await Promise.all(batch.map((id) => apiGet<MemberItem>(`/members/${id}`)));
-        results.forEach((res) => { if (res.success && res.data) allData.push(res.data); });
-      }
-      exportCSVData(allData); Message.clear();
-      Message.success(`成功导出 ${allData.length} 条会员数据`);
-    } catch { Message.clear(); Message.error('导出失败'); }
-  };
   const exportCSVData = (members: MemberItem[]) => {
+    // CSV 字段加引号包裹，防止 Excel 将手机号等自动转为科学计数法
+    const escapeCSV = (val: string) => `"${val.replace(/"/g, '""')}"`;
     const headers = ['会员编号', '姓名', '手机号', '邮箱', '性别', '会员类型', '会员等级', '会籍状态', '成长值', 'RFM分层', '入会日期', '到期日期'];
     const rows = members.map((m) => [
-      m.member_no || '', m.name, `${m.phone_region}${m.phone}`, m.email || '',
-      GENDER_MAP[m.gender] || '未知', m.memberType?.name || '', m.memberLevel?.name || '',
-      MEMBERSHIP_STATUS[m.membership_status || '']?.text || '',
-      String(m.growth_value || 0), RFM_LAYER[m.rfm_layer || '']?.text || '',
-      m.join_date ? dayjs(m.join_date).format('YYYY-MM-DD') : '',
-      m.expire_date ? dayjs(m.expire_date).format('YYYY-MM-DD') : '',
+      escapeCSV(m.member_no || ''),
+      escapeCSV(m.name),
+      escapeCSV(`${m.phone_region}${m.phone}`),
+      escapeCSV(m.email || ''),
+      escapeCSV(GENDER_MAP[m.gender] || '未知'),
+      escapeCSV(m.memberType?.name || ''),
+      escapeCSV(m.memberLevel?.name || ''),
+      escapeCSV(MEMBERSHIP_STATUS[m.membership_status || '']?.text || ''),
+      escapeCSV(String(m.growth_value || 0)),
+      escapeCSV(RFM_LAYER[m.rfm_layer || '']?.text || ''),
+      escapeCSV(m.join_date ? dayjs(m.join_date).format('YYYY-MM-DD') : ''),
+      escapeCSV(m.expire_date ? dayjs(m.expire_date).format('YYYY-MM-DD') : ''),
     ]);
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const csvContent = [headers.map(escapeCSV).join(','), ...rows.map((r) => r.join(','))].join('\n');
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a'); link.href = url;
@@ -392,12 +403,12 @@ export default function MembersPage() {
     return cols;
   };
 
-  // 表格行选择（跨页多选）
+  // 表格行选择（跨页多选，keys 保持 number 类型与 rowKey 一致）
   const rowSelection = {
     selectedRowKeys: selectedKeys,
     onChange: (keys: (string | number)[]) => {
-      const currentPageIds = data.map((d) => String(d.id));
-      const currentSelected = keys.map(String);
+      const currentPageIds = data.map((d) => d.id);
+      const currentSelected = keys.map(Number);
       const otherPageSelected = selectedKeysRef.current.filter(
         (k) => !currentPageIds.includes(k)
       );

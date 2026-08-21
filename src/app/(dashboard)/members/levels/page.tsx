@@ -54,7 +54,7 @@ export default function MemberLevelsPage() {
     if (keyword) {
       const kw = keyword.toLowerCase();
       result = result.filter(
-        (item) => item.name.toLowerCase().includes(kw) || item.level_key.toLowerCase().includes(kw)
+        (item) => item.name.toLowerCase().includes(kw)
       );
     }
     if (growthFilter) {
@@ -123,9 +123,6 @@ export default function MemberLevelsPage() {
   const columns: ColumnProps<MemberLevelItem>[] = [
     { title: '等级名称', dataIndex: 'name', width: 110 },
     {
-      title: '等级标识', dataIndex: 'level_key', width: 90,
-    },
-    {
       title: '成长值门槛', dataIndex: 'growth_threshold', width: 110, align: 'right',
       render: (_, r) => r.growth_threshold.toLocaleString(),
     },
@@ -165,7 +162,7 @@ export default function MemberLevelsPage() {
       <div className="site-card" style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
           <Input
-            placeholder="等级名称 / 等级标识"
+            placeholder="等级名称"
             prefix={<IconSearch />}
             style={{ width: 220 }}
             value={keyword}
