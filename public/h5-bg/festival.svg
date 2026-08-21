@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 375 812">
+  <defs>
+    <linearGradient id="fb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#C41E24"/>
+      <stop offset="100%" stop-color="#7E0E14"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFD666" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FFD666" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="375" height="812" fill="url(#fb)"/>
+  <circle cx="60" cy="90" r="60" fill="url(#glow)" opacity="0.5"/>
+  <circle cx="310" cy="170" r="80" fill="url(#glow)" opacity="0.4"/>
+  <circle cx="200" cy="60" r="40" fill="url(#glow)" opacity="0.45"/>
+  <g fill="#FFD666" opacity="0.85">
+    <circle cx="46" cy="220" r="3"/>
+    <circle cx="120" cy="150" r="2.5"/>
+    <circle cx="330" cy="300" r="3"/>
+    <circle cx="260" cy="90" r="2.5"/>
+    <circle cx="180" cy="260" r="2"/>
+  </g>
+  <g stroke="#FFD666" stroke-opacity="0.35" fill="none" stroke-width="2">
+    <path d="M-10 700 Q90 640 190 700 T390 700"/>
+    <path d="M-10 730 Q90 670 190 730 T390 730"/>
+    <path d="M-10 760 Q90 700 190 760 T390 760"/>
+  </g>
+  <path d="M0 812 L0 760 Q187 700 375 760 L375 812 Z" fill="#5F090D" opacity="0.7"/>
+</svg>

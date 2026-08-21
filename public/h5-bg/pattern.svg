@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 375 812">
+  <defs>
+    <pattern id="dm" width="44" height="44" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="44" height="44" fill="#F7F2E9"/>
+      <rect x="0" y="0" width="22" height="22" fill="#EFE6D4"/>
+      <rect x="22" y="22" width="22" height="22" fill="#EFE6D4"/>
+      <circle cx="22" cy="22" r="4" fill="#D9C9A8"/>
+    </pattern>
+  </defs>
+  <rect width="375" height="812" fill="url(#dm)"/>
+  <rect width="375" height="812" fill="#FBF8F1" opacity="0.35"/>
+</svg>
