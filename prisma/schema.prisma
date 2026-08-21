@@ -151,13 +151,14 @@ model Activity {
   end_time            String
   location            String
   description         String?
-  status              String   @default("草稿") // 草稿/报名中/进行中/已结束
+  status              String   @default("草稿") // 草稿（手动）→ 由系统根据时间自动计算：报名未开始/报名中/报名已结束/进行中/已结束
   visibility          String   @default("public") // public/registered/member/member_level
   max_participants    Int?
   registration_start  String?
   registration_end    String?
   need_audit          Boolean  @default(false)
   fee                 Float    @default(0) // 活动费用（HKD）
+  h5_config           String?  // H5报名页配置（JSON字符串）
   is_deleted          Boolean  @default(false)
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt

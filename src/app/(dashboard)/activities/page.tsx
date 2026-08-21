@@ -11,6 +11,7 @@ import {
 import type { ColumnProps } from '@arco-design/web-react/es/Table';
 import BreadcrumbNav from '@/components/layout/Breadcrumb';
 import { apiGet, apiDelete } from '@/lib/api';
+import { statusColorMap, allActivityStatuses } from '@/lib/activity-status';
 import dayjs from 'dayjs';
 
 /** 活动列表项 */
@@ -30,14 +31,6 @@ interface ActivityItem {
   created_at: string;
   _count?: { registrations: number };
 }
-
-/** 状态标签颜色映射 */
-const statusColorMap: Record<string, string> = {
-  '草稿': 'orange',
-  '报名中': 'green',
-  '进行中': 'blue',
-  '已结束': 'gray',
-};
 
 /** 活动分类映射 */
 const categoryMap: Record<string, string> = {
@@ -223,12 +216,7 @@ export default function ActivitiesPage() {
             value={statusFilter || undefined}
             onChange={(v) => setStatusFilter(v || '')}
             allowClear
-            options={[
-              { value: '草稿', label: '草稿' },
-              { value: '报名中', label: '报名中' },
-              { value: '进行中', label: '进行中' },
-              { value: '已结束', label: '已结束' },
-            ]}
+            options={allActivityStatuses}
           />
           <Select
             placeholder="请选择活动分类"

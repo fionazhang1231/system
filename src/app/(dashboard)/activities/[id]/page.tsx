@@ -9,6 +9,7 @@ import { IconExport, IconCheckCircle } from '@arco-design/web-react/icon';
 import type { ColumnProps } from '@arco-design/web-react/es/Table';
 import BreadcrumbNav from '@/components/layout/Breadcrumb';
 import { apiGet, apiPut } from '@/lib/api';
+import { statusColorMap } from '@/lib/activity-status';
 
 const { Row, Col } = Grid;
 
@@ -44,10 +45,6 @@ interface ActivityDetailData {
     channel?: string | null;
   }>;
 }
-
-const statusColorMap: Record<string, string> = {
-  '草稿': 'orange', '报名中': 'green', '进行中': 'blue', '已结束': 'gray',
-};
 
 /** 活动详情页 */
 export default function ActivityDetailPage() {
