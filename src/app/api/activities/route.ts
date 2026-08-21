@@ -55,17 +55,18 @@ export async function GET(request: Request) {
     }));
 
     // 非草稿状态筛选：在计算后的结果中过滤
+    let filteredTotal = total;
     if (status && status !== '草稿') {
-      result = result.filter((a) => a.status === status);
-      // 手动分页
+      const filtered = result.filter((a) => a.status === status);
+      filteredTotal = filtered.length; // 先记录筛选后总数，再分页
       const startIdx = (page - 1) * pageSize;
-      result = result.slice(startIdx, startIdx + pageSize);
+      result = filtered.slice(startIdx, startIdx + pageSize);
     }
 
     return NextResponse.json({
       success: true,
       data: result,
-      total: status && status !== '草稿' ? result.length : total,
+      total: filteredTotal,
     });
   } catch (error) {
     console.error('获取活动列表失败:', error);

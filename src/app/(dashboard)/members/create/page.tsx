@@ -2,12 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import dayjs from 'dayjs';
 import {
   Form, Input, Select, DatePicker, Button, Message, Steps, Space, Card, Spin,
 } from '@arco-design/web-react';
 import BreadcrumbNav from '@/components/layout/Breadcrumb';
 import { apiGet, apiPost, apiPut } from '@/lib/api';
 import { isValidPhone, getPhoneHint } from '@/lib/phone';
+
+/** 日期字段提交格式 */
+const fmtDate = (v: unknown): string => (v ? dayjs(v as string).format('YYYY-MM-DD') : '');
+/** 日期字段回显 */
+const toDayjs = (v: unknown) => (v ? dayjs(v as string) : undefined);
 
 /** 新增/编辑会员页面 */
 export default function MemberFormPage() {
@@ -47,12 +53,12 @@ export default function MemberFormPage() {
             phone: d.phone,
             email: d.email || '',
             gender: d.gender || 0,
-            birthday: d.birthday || '',
+            birthday: toDayjs(d.birthday),
             address: d.address || '',
             member_type_id: ext?.member_type_id || (memberTypes[0]?.id ?? 1),
             member_level_id: ext?.member_level_id || (memberLevels[0]?.id ?? 1),
-            join_date: ext?.join_date || new Date().toISOString().split('T')[0],
-            expire_date: ext?.expire_date || '2025-12-31',
+            join_date: toDayjs(ext?.join_date) || dayjs(),
+            expire_date: toDayjs(ext?.expire_date),
           });
         }
         setLoading(false);
@@ -60,8 +66,7 @@ export default function MemberFormPage() {
     } else {
       // 新增模式：设置默认值
       form.setFieldsValue({
-        join_date: new Date().toISOString().split('T')[0],
-        expire_date: '2025-12-31',
+        join_date: dayjs(),
       });
     }
   }, [isEdit, params.id, form, memberTypes, memberLevels]);
@@ -96,6 +101,9 @@ export default function MemberFormPage() {
       const values = form.getFieldsValue();
       const payload = {
         ...values,
+        birthday: fmtDate(values.birthday),
+        join_date: fmtDate(values.join_date),
+        expire_date: fmtDate(values.expire_date),
         member_type_id: values.member_type_id || memberTypes[0]?.id || 1,
         member_level_id: values.member_level_id || memberLevels[0]?.id || 1,
       };
@@ -147,7 +155,7 @@ export default function MemberFormPage() {
           {/* Step 1: 基本信息 */}
           <div style={{ display: currentStep === 0 ? 'block' : 'none' }}>
             <Form.Item field="name" label="姓名" rules={[{ required: true, message: '请输入姓名' }]}>
-              <Input placeholder="请输入姓名" maxLength={50} />
+              <Input placeholder="请输入姓名" maxLength={50} showWordLimit />
             </Form.Item>
             <Form.Item
               field="phone"
@@ -168,7 +176,7 @@ export default function MemberFormPage() {
               <Input placeholder="请输入手机号（大陆11位/港澳8位）" maxLength={11} />
             </Form.Item>
             <Form.Item field="email" label="邮箱" rules={[{ type: 'email', message: '请输入正确的邮箱格式' }]}>
-              <Input placeholder="请输入邮箱" />
+              <Input placeholder="请输入邮箱" maxLength={100} showWordLimit />
             </Form.Item>
             <Form.Item field="gender" label="性别">
               <Select placeholder="请选择" options={[
@@ -178,10 +186,10 @@ export default function MemberFormPage() {
               ]} allowClear />
             </Form.Item>
             <Form.Item field="birthday" label="生日">
-              <Input placeholder="YYYY-MM-DD" />
+              <DatePicker format="YYYY-MM-DD" placeholder="请选择生日" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item field="address" label="地址">
-              <Input placeholder="请输入地址" />
+              <Input placeholder="请输入地址" maxLength={200} showWordLimit />
             </Form.Item>
           </div>
 
@@ -212,12 +220,12 @@ export default function MemberFormPage() {
                 <p><strong>手机号：</strong>{form.getFieldValue('phone')}</p>
                 <p><strong>邮箱：</strong>{form.getFieldValue('email') || '-'}</p>
                 <p><strong>性别：</strong>{form.getFieldValue('gender') === 1 ? '男' : form.getFieldValue('gender') === 2 ? '女' : '未知'}</p>
-                <p><strong>生日：</strong>{form.getFieldValue('birthday') || '-'}</p>
+                <p><strong>生日：</strong>{fmtDate(form.getFieldValue('birthday')) || '-'}</p>
                 <p><strong>地址：</strong>{form.getFieldValue('address') || '-'}</p>
                 <p><strong>会员类型：</strong>{memberTypes.find((t) => t.id === form.getFieldValue('member_type_id'))?.name || '-'}</p>
                 <p><strong>会员等级：</strong>{memberLevels.find((l) => l.id === form.getFieldValue('member_level_id'))?.name || '-'}</p>
-                <p><strong>入会日期：</strong>{form.getFieldValue('join_date') || '-'}</p>
-                <p><strong>到期日期：</strong>{form.getFieldValue('expire_date') || '-'}</p>
+                <p><strong>入会日期：</strong>{fmtDate(form.getFieldValue('join_date')) || '-'}</p>
+                <p><strong>到期日期：</strong>{fmtDate(form.getFieldValue('expire_date')) || '-'}</p>
               </div>
             </Card>
           </div>

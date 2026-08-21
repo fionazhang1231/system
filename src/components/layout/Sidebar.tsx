@@ -7,6 +7,7 @@ import {
   IconCalendar,
   IconApps,
   IconStar,
+  IconGift,
 } from '@arco-design/web-react/icon';
 
 const MenuItem = Menu.Item;
@@ -26,6 +27,7 @@ export default function Sidebar({
     if (pathname.startsWith('/members/types')) return 'member-types';
     if (pathname.startsWith('/members/levels')) return 'member-levels';
     if (pathname.startsWith('/members')) return 'members';
+    if (pathname.startsWith('/activities/square')) return 'activity-square';
     if (pathname.startsWith('/activities')) return 'activities';
     return 'members';
   };
@@ -99,6 +101,7 @@ export default function Sidebar({
               'member-types': '/members/types',
               'member-levels': '/members/levels',
               'activities': '/activities',
+              'activity-square': '/activities/square',
             };
             if (routeMap[key]) router.push(routeMap[key]);
           }}
@@ -137,6 +140,10 @@ export default function Sidebar({
             <MenuItem key="activities">
               <IconCalendar style={{ marginRight: 6 }} />
               活动列表
+            </MenuItem>
+            <MenuItem key="activity-square">
+              <IconGift style={{ marginRight: 6 }} />
+              活动广场
             </MenuItem>
           </SubMenu>
         </Menu>

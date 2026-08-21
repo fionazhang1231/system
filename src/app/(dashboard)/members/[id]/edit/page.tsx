@@ -2,11 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import dayjs from 'dayjs';
 import {
-  Form, Input, Select, Button, Message, Steps, Space, Card, Spin,
+  Form, Input, Select, DatePicker, Button, Message, Steps, Space, Card, Spin,
 } from '@arco-design/web-react';
 import BreadcrumbNav from '@/components/layout/Breadcrumb';
 import { apiGet, apiPut } from '@/lib/api';
+
+/** 日期字段提交格式 */
+const fmtDate = (v: unknown): string => (v ? dayjs(v as string).format('YYYY-MM-DD') : '');
+/** 日期字段回显 */
+const toDayjs = (v: unknown) => (v ? dayjs(v as string) : undefined);
 
 /** 编辑会员页面 */
 export default function EditMemberPage() {
@@ -42,12 +48,12 @@ export default function EditMemberPage() {
           phone: d.phone,
           email: d.email || '',
           gender: d.gender || '',
-          birthday: d.birthday || '',
+          birthday: toDayjs(d.birthday),
           address: d.address || '',
           member_type_id: ext?.member_type_id,
           member_level_id: ext?.member_level_id,
-          join_date: ext?.join_date || '',
-          expire_date: ext?.expire_date || '',
+          join_date: toDayjs(ext?.join_date),
+          expire_date: toDayjs(ext?.expire_date),
         });
       }
       setLoading(false);
@@ -67,7 +73,13 @@ export default function EditMemberPage() {
     setSubmitting(true);
     try {
       const values = form.getFieldsValue();
-      const res = await apiPut(`/members/${params.id}`, values);
+      const payload = {
+        ...values,
+        birthday: fmtDate(values.birthday),
+        join_date: fmtDate(values.join_date),
+        expire_date: fmtDate(values.expire_date),
+      };
+      const res = await apiPut(`/members/${params.id}`, payload);
       if (res.success) {
         Message.success('更新成功');
         router.push('/members');
@@ -99,22 +111,22 @@ export default function EditMemberPage() {
         <Form form={form} layout="vertical" autoComplete="off">
           <div style={{ display: currentStep === 0 ? 'block' : 'none' }}>
             <Form.Item field="name" label="姓名" rules={[{ required: true, message: '请输入姓名' }]}>
-              <Input placeholder="请输入姓名" maxLength={50} />
+              <Input placeholder="请输入姓名" maxLength={50} showWordLimit />
             </Form.Item>
             <Form.Item field="phone" label="手机号" rules={[{ required: true, message: '请输入手机号' }, { match: /^1\d{10}$/, message: '请输入正确的11位手机号' }]}>
               <Input placeholder="请输入手机号" maxLength={11} />
             </Form.Item>
             <Form.Item field="email" label="邮箱" rules={[{ type: 'email', message: '请输入正确的邮箱格式' }]}>
-              <Input placeholder="请输入邮箱" />
+              <Input placeholder="请输入邮箱" maxLength={100} showWordLimit />
             </Form.Item>
             <Form.Item field="gender" label="性别">
               <Select placeholder="请选择" options={[{ value: '男', label: '男' }, { value: '女', label: '女' }]} allowClear />
             </Form.Item>
             <Form.Item field="birthday" label="生日">
-              <Input placeholder="YYYY-MM-DD" />
+              <DatePicker format="YYYY-MM-DD" placeholder="请选择生日" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item field="address" label="地址">
-              <Input placeholder="请输入地址" />
+              <Input placeholder="请输入地址" maxLength={200} showWordLimit />
             </Form.Item>
           </div>
           <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
@@ -125,10 +137,10 @@ export default function EditMemberPage() {
               <Select placeholder="请选择" options={memberLevels.map((l) => ({ value: l.id, label: l.name }))} />
             </Form.Item>
             <Form.Item field="join_date" label="入会日期">
-              <Input placeholder="YYYY-MM-DD" />
+              <DatePicker format="YYYY-MM-DD" placeholder="请选择入会日期" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item field="expire_date" label="到期日期">
-              <Input placeholder="YYYY-MM-DD" />
+              <DatePicker format="YYYY-MM-DD" placeholder="请选择到期日期" style={{ width: '100%' }} />
             </Form.Item>
           </div>
           <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>

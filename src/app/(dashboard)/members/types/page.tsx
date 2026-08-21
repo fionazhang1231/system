@@ -251,10 +251,10 @@ export default function MemberTypesPage() {
       >
         <Form form={form} layout="vertical">
           <Form.Item field="name" label="类型名称" rules={[{ required: true, message: '请输入类型名称' }]}>
-            <Input placeholder="请输入类型名称" maxLength={20} />
+            <Input placeholder="请输入类型名称" maxLength={20} showWordLimit />
           </Form.Item>
           <Form.Item field="description" label="描述">
-            <Input.TextArea placeholder="请输入描述" maxLength={200} autoSize={{ minRows: 2, maxRows: 4 }} />
+            <Input.TextArea placeholder="请输入描述" maxLength={200} showWordLimit autoSize={{ minRows: 2, maxRows: 4 }} />
           </Form.Item>
           <Form.Item field="fee_mode" label="收费模式" initialValue="free">
             <Select options={[

@@ -6,7 +6,7 @@ import {
   Table, Button, Input, Select, Space, Tag, Modal, Message, Tooltip,
 } from '@arco-design/web-react';
 import {
-  IconSearch, IconPlus, IconDelete, IconEdit, IconEye, IconRefresh,
+  IconSearch, IconPlus, IconDelete, IconEdit, IconEye, IconRefresh, IconGift,
 } from '@arco-design/web-react/icon';
 import type { ColumnProps } from '@arco-design/web-react/es/Table';
 import BreadcrumbNav from '@/components/layout/Breadcrumb';
@@ -241,9 +241,14 @@ export default function ActivitiesPage() {
       {/* 操作按钮区 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <div />
-        <Button type="primary" icon={<IconPlus />} onClick={() => router.push('/activities/create')}>
-          创建活动
-        </Button>
+        <Space>
+          <Button icon={<IconGift />} onClick={() => router.push('/activities/square')}>
+            活动广场
+          </Button>
+          <Button type="primary" icon={<IconPlus />} onClick={() => router.push('/activities/create')}>
+            创建活动
+          </Button>
+        </Space>
       </div>
 
       {/* 表格 */}

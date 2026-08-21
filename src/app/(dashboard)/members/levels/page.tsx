@@ -217,16 +217,16 @@ export default function MemberLevelsPage() {
       >
         <Form form={form} layout="vertical">
           <Form.Item field="name" label="等级名称" rules={[{ required: true, message: '请输入等级名称' }]}>
-            <Input placeholder="请输入等级名称" maxLength={20} />
+            <Input placeholder="请输入等级名称" maxLength={20} showWordLimit />
           </Form.Item>
           <Form.Item field="growth_threshold" label="成长值门槛" initialValue={0}>
             <InputNumber min={0} placeholder="达到此成长值自动升级" style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item field="upgrade_condition" label="升级条件">
-            <Input placeholder="请输入升级条件" maxLength={100} />
+            <Input placeholder="请输入升级条件" maxLength={100} showWordLimit />
           </Form.Item>
           <Form.Item field="benefits" label="权益描述">
-            <Input.TextArea placeholder="请输入权益描述" maxLength={200} autoSize={{ minRows: 2, maxRows: 4 }} />
+            <Input.TextArea placeholder="请输入权益描述" maxLength={200} showWordLimit autoSize={{ minRows: 2, maxRows: 4 }} />
           </Form.Item>
           <Form.Item
             field="sort_order"
