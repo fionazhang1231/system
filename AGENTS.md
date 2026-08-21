@@ -6,9 +6,10 @@
 
 ## 技术栈
 
-- **Framework**: Next.js 16 (App Router)
-- **Core**: React 19 + TypeScript 5 (strict)
-- **UI 组件**: Arco Design React (@arco-design/web-react)
+- **Framework**: Next.js 14 (App Router)
+- **Core**: React 18 + TypeScript 5 (strict)
+- **UI 组件**: Arco Design React (@arco-design/web-react 2.66.16)
+- **注意**: 不可升级到 React 19，Arco Design 不兼容会导致 hydration 失败
 - **Styling**: Tailwind CSS 4
 - **图表**: ECharts (echarts-for-react)
 - **数据库**: Prisma 5 + SQLite
