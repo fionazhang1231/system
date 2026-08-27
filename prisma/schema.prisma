@@ -182,6 +182,7 @@ model ActivityRegistration {
   check_in_time   String?  // ISO datetime string
   check_in_method String?  // 手动/扫码
   channel         String?  // 报名渠道（UTM追踪）
+  form_data       String?  // H5表单提交的动态字段数据（JSON字符串）
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 

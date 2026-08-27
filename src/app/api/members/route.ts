@@ -149,9 +149,19 @@ export async function POST(request: Request) {
       ? await prisma.memberLevel.findUnique({ where: { id: member_level_id } })
       : await prisma.memberLevel.findFirst({ where: { org_id: ORG_ID } });
 
-    // 生成会员编号
-    const memberCount = await prisma.memberExt.count({ where: { org_id: ORG_ID } });
-    const memberNo = `M${String(1000 + memberCount + 1).padStart(4, '0')}`;
+    // 生成会员编号：查询当前最大编号+1，避免删除后重复/并发冲突
+    const generateMemberNo = async (): Promise<string> => {
+      const lastMember = await prisma.memberExt.findFirst({
+        where: { org_id: ORG_ID },
+        orderBy: { member_no: 'desc' },
+        select: { member_no: true },
+      });
+      const lastNum = lastMember?.member_no
+        ? parseInt(lastMember.member_no.replace(/^M/, ''), 10) || 1000
+        : 1000;
+      return `M${String(lastNum + 1).padStart(4, '0')}`;
+    };
+    const memberNo = await generateMemberNo();
 
     // 创建用户（对齐需求文档字段）
     const user = await prisma.user.create({
@@ -181,7 +191,7 @@ export async function POST(request: Request) {
         member_type_id: member_type_id || 1,
         member_level_id: member_level_id || 1,
         join_date: join_date || new Date().toISOString().split('T')[0],
-        expire_date: expire_date || '2025-12-31',
+        expire_date: expire_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         membership_status: 'active',
         rfm_layer: 'new',
         rfm_score: 0,
