@@ -64,9 +64,10 @@ export default function MemberFormPage() {
         setLoading(false);
       });
     } else {
-      // 新增模式：设置默认值
+      // 新增模式：入会日期默认今天，到期日期默认入会日期 + 1 年
       form.setFieldsValue({
         join_date: dayjs(),
+        expire_date: dayjs().add(1, 'year'),
       });
     }
   }, [isEdit, params.id, form, memberTypes, memberLevels]);
@@ -151,7 +152,17 @@ export default function MemberFormPage() {
           <Steps.Step title="确认提交" />
         </Steps>
 
-        <Form form={form} layout="vertical" autoComplete="off">
+        <Form
+          form={form}
+          layout="vertical"
+          autoComplete="off"
+          onValuesChange={(changed) => {
+            // 新增模式下，修改入会日期时联动到期日期 = 入会日期 + 1 年
+            if (!isEdit && changed.join_date) {
+              form.setFieldValue('expire_date', dayjs(changed.join_date as string).add(1, 'year'));
+            }
+          }}
+        >
           {/* Step 1: 基本信息 */}
           <div style={{ display: currentStep === 0 ? 'block' : 'none' }}>
             <Form.Item field="name" label="姓名" rules={[{ required: true, message: '请输入姓名' }]}>
@@ -204,7 +215,7 @@ export default function MemberFormPage() {
             <Form.Item field="join_date" label="入会日期">
               <DatePicker style={{ width: '100%' }} />
             </Form.Item>
-            <Form.Item field="expire_date" label="到期日期">
+            <Form.Item field="expire_date" label="到期日期" extra="默认取入会日期 + 1 年，可手动调整">
               <DatePicker style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item field="remark" label="备注">

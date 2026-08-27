@@ -191,7 +191,8 @@ export async function POST(request: Request) {
         member_type_id: member_type_id || 1,
         member_level_id: member_level_id || 1,
         join_date: join_date || new Date().toISOString().split('T')[0],
-        expire_date: expire_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        // 到期日期默认取入会日期 + 1 年（未显式传入时）
+        expire_date: expire_date || new Date(new Date(join_date || Date.now()).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         membership_status: 'active',
         rfm_layer: 'new',
         rfm_score: 0,
