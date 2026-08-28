@@ -7,10 +7,11 @@ import {
 } from '@arco-design/web-react';
 import {
   IconSearch, IconPlus, IconDelete, IconEdit, IconEye, IconRefresh, IconGift,
+  IconLink, IconCopy,
 } from '@arco-design/web-react/icon';
 import type { ColumnProps } from '@arco-design/web-react/es/Table';
 import BreadcrumbNav from '@/components/layout/Breadcrumb';
-import { apiGet, apiDelete } from '@/lib/api';
+import { apiGet, apiDelete, apiPost } from '@/lib/api';
 import { statusColorMap, allActivityStatuses } from '@/lib/activity-status';
 import dayjs from 'dayjs';
 
@@ -62,6 +63,10 @@ export default function ActivitiesPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
 
+  // H5 预览链接弹窗 & 复制活动
+  const [previewActivity, setPreviewActivity] = useState<ActivityItem | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<number | null>(null);
+
   const fetchData = useCallback(async (p: number, ps: number) => {
     setLoading(true);
     try {
@@ -106,6 +111,43 @@ export default function ActivitiesPage() {
         }
       },
     });
+  };
+
+  /** 生成 H5 公开报名页链接（基于当前访问域名，保证环境一致） */
+  const getH5Link = (record: ActivityItem) => `${window.location.origin}/h5/activities/${record.id}`;
+
+  /** 复制 H5 链接到剪贴板（兼容非安全上下文降级方案） */
+  const copyH5Link = async (record: ActivityItem) => {
+    const link = getH5Link(record);
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = link;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+    Message.success('H5 链接已复制，可分享给用户或放到海报中');
+  };
+
+  /** 一键复制活动：生成草稿副本并跳转编辑页精细化调整 */
+  const handleDuplicate = async (record: ActivityItem) => {
+    setDuplicatingId(record.id);
+    try {
+      const res = await apiPost<ActivityItem>(`/activities/${record.id}/duplicate`);
+      if (res.success && res.data) {
+        Message.success(`已创建副本「${res.data.title}」（未发布），正在打开编辑页…`);
+        router.push(`/activities/${res.data.id}/edit`);
+      } else {
+        Message.error(res.error || '复制失败');
+      }
+    } finally {
+      setDuplicatingId(null);
+    }
   };
 
   const columns: ColumnProps<ActivityItem>[] = [
@@ -177,7 +219,7 @@ export default function ActivitiesPage() {
       },
     },
     {
-      title: '操作', dataIndex: 'operations', width: 170, align: 'center', fixed: 'right' as const,
+      title: '操作', dataIndex: 'operations', width: 240, align: 'center', fixed: 'right' as const,
       render: (_: unknown, record: ActivityItem) => (
         <Space size={4}>
           <Button type="text" size="small" icon={<IconEye />} onClick={() => router.push(`/activities/${record.id}`)}>
@@ -186,6 +228,20 @@ export default function ActivitiesPage() {
           <Button type="text" size="small" icon={<IconEdit />} onClick={() => router.push(`/activities/${record.id}/edit`)}>
             编辑
           </Button>
+          <Tooltip content="预览 H5 报名页 / 复制链接">
+            <Button type="text" size="small" icon={<IconLink />} onClick={() => setPreviewActivity(record)}>
+              预览
+            </Button>
+          </Tooltip>
+          <Tooltip content="复制此活动，生成未发布草稿">
+            <Button
+              type="text" size="small" icon={<IconCopy />}
+              loading={duplicatingId === record.id}
+              onClick={() => handleDuplicate(record)}
+            >
+              复制
+            </Button>
+          </Tooltip>
           <Button type="text" size="small" status="danger" icon={<IconDelete />} onClick={() => handleDelete(record)}>
             删除
           </Button>
@@ -279,6 +335,46 @@ export default function ActivitiesPage() {
           }
         />
       </div>
+
+      {/* H5 预览链接弹窗 */}
+      <Modal
+        title="H5 报名页链接"
+        visible={!!previewActivity}
+        onCancel={() => setPreviewActivity(null)}
+        footer={null}
+        style={{ width: 520 }}
+      >
+        {previewActivity && (
+          <div>
+            <div style={{ marginBottom: 8, color: '#4E5969', fontSize: 13 }}>
+              活动「{previewActivity.title}」的公开报名页（C 端用户免登录访问）：
+            </div>
+            <Input.TextArea
+              readOnly
+              value={getH5Link(previewActivity)}
+              autoSize
+              style={{
+                background: '#F7F8FA', color: '#1D2129', fontSize: 13,
+                wordBreak: 'break-all', marginBottom: 16,
+              }}
+            />
+            <Space>
+              <Button type="primary" icon={<IconCopy />} onClick={() => copyH5Link(previewActivity)}>
+                复制链接
+              </Button>
+              <Button
+                icon={<IconEye />}
+                onClick={() => window.open(getH5Link(previewActivity), '_blank')}
+              >
+                新窗口打开预览
+              </Button>
+            </Space>
+            <div style={{ marginTop: 16, padding: '10px 12px', background: '#E8F3FF', borderRadius: 6, color: '#4E5969', fontSize: 12, lineHeight: 1.7 }}>
+              提示：活动未发布时该链接仅供内部预览；发布后可将链接分享给用户或放到海报中用于报名。
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

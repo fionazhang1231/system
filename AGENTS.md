@@ -137,6 +137,7 @@ npx tsx prisma/seed.ts # 运行种子数据
 | GET | /api/activities/[id] | 活动详情 |
 | PUT | /api/activities/[id] | 编辑活动 |
 | DELETE | /api/activities/[id] | 删除活动 |
+| POST | /api/activities/[id]/duplicate | 一键复制活动（生成草稿副本，不含报名数据） |
 | GET/POST | /api/activities/[id]/registrations | 报名列表/新增报名 |
 | PUT | /api/activities/[id]/registrations | 审核报名 |
 | POST | /api/activities/[id]/checkin | 签到 |
